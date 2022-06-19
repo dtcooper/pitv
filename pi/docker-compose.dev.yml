@@ -1,10 +1,12 @@
 services:
   api:
+    restart: "no"
     volumes:
       - ./api/app:/app
     ports:
       - 8080:8080
   nginx:
+    restart: "no"
     volumes:
       - ./nginx/image/etc/nginx/user_conf.d:/etc/nginx/user_conf.d:ro
       - ./nginx/image/etc/nginx/templates:/etc/nginx/templates:ro
