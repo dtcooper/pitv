@@ -1,0 +1,3 @@
+/pi/.env
+/pi/docker-compose.override.yml
+/pi/local-certificate-authority/

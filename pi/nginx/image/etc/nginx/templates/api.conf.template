@@ -1,0 +1,20 @@
+server {
+    listen 443 ssl http2 default_server reuseport;
+    server_name ${DOMAIN_NAME};
+
+    ssl_certificate /etc/letsencrypt/live/api/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/api/chain.pem;
+    ssl_dhparam /etc/letsencrypt/dhparams/dhparam.pem;
+
+    location / {
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://api:8080;
+    }
+
+    add_header Content-Type 'text/plain';
+    return 200 'This is a test!';
+}

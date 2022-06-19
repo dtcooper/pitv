@@ -1,0 +1,22 @@
+services:
+  api:
+    build:
+      context: api
+    volumes:
+      - "${VIDOES_DIR:?VIDOES_DIR needs to be set. See .env file.}:/videos"
+  nginx:
+    build:
+      context: nginx
+    depends_on:
+      - api
+    volumes:
+      - nginx_secrets:/etc/letsencrypt
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      - "DOMAIN_NAME=${DOMAIN_NAME:?DOMAIN_NAME needs to be set. See .env file.}"
+      - "CERTBOT_EMAIL=${CERTBOT_EMAIL:?CERTBOT_EMAIL needs to be set. See .env file.}"
+
+volumes:
+  nginx_secrets:

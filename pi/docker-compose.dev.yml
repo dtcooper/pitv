@@ -1,0 +1,13 @@
+services:
+  api:
+    volumes:
+      - ./api/app:/app
+    ports:
+      - 8080:8080
+  nginx:
+    volumes:
+      - ./nginx/image/etc/nginx/user_conf.d:/etc/nginx/user_conf.d:ro
+      - ./nginx/image/etc/nginx/templates:/etc/nginx/templates:ro
+      - ./local-certificate-authority:/etc/local_ca
+    environment:
+      - USE_LOCAL_CA=1
