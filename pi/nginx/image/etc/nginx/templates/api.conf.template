@@ -14,7 +14,4 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_pass http://api:8080;
     }
-
-    add_header Content-Type 'text/plain';
-    return 200 'This is a test!';
 }
