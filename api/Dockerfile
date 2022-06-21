@@ -20,7 +20,9 @@ ENV PATH="/root/.poetry/bin:${PATH}"
 
 COPY pyproject.toml poetry.lock /app/
 WORKDIR /app
-RUN poetry install
+RUN poetry install \
+    ### XXX for development
+    && poetry update
 
 COPY . /app
 CMD ["./run.sh"]

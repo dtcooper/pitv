@@ -10,6 +10,8 @@ aiohttp = "^3.8.1"
 gunicorn = "^20.1.0"
 aiohttp-sse = "^2.1.0"
 watchdog = {extras = ["watchmedo"], version = "^2.1.9"}
+psutil = "^5.9.1"
+termcolor = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 
