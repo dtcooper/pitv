@@ -31,7 +31,7 @@ class OMXPlayer:
 
     def scan_for_videos(self):
         # TODO refresh when size updates as well (to support downloading)
-        videos = self.VIDEOS_DIR.iterdir()
+        videos = list(self.VIDEOS_DIR.iterdir())
         before = set(self.videos.keys())
         after = {v.stem for v in videos}
         if before != after:
