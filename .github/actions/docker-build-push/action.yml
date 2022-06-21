@@ -43,7 +43,6 @@ runs:
         push: true
         platforms: linux/arm64
         context: ./${{ inputs.container }}/
-        file: ./${{ inputs.container }}/Dockerfile
         tags: |
           ${{ steps.vars.outputs.repo }}:latest
           ${{ steps.vars.outputs.repo }}:${{ steps.vars.outputs.sha }}
