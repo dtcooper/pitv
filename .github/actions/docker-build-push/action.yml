@@ -42,10 +42,8 @@ runs:
       with:
         push: true
         platforms: linux/arm64
-        build-args: |
-          GIT_REV=${{ steps.vars.outputs.sha }}
-        context: ./${{ inputs.containers }}/
-        file: ./${{ inputs.containers }}/Dockerfile
+        context: ./${{ inputs.container }}/
+        file: ./${{ inputs.container }}/Dockerfile
         tags: |
           ${{ steps.vars.outputs.repo }}:latest
           ${{ steps.vars.outputs.repo }}:${{ steps.vars.outputs.sha }}
