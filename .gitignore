@@ -1,3 +1,4 @@
-/pi/.env
-/pi/docker-compose.override.yml
-/pi/local-certificate-authority/
+/.env
+__pycache__/
+docker-compose.override.yml
+local-certificate-authority/

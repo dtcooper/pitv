@@ -4,7 +4,7 @@ services:
     build:
       context: api
     volumes:
-      - "${VIDOES_DIR:?VIDOES_DIR needs to be set. See .env file.}:/videos"
+      - "${VIDEOS_DIR:?VIDEOS_DIR needs to be set. See .env file.}:/videos"
   nginx:
     restart: always
     build:

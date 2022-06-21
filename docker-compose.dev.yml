@@ -2,7 +2,7 @@ services:
   api:
     restart: "no"
     volumes:
-      - ./api/app:/app
+      - ./api:/app
     ports:
       - 8080:8080
   nginx:
@@ -13,3 +13,4 @@ services:
       - ./local-certificate-authority:/etc/local_ca
     environment:
       - USE_LOCAL_CA=1
+      - USE_OMXPLAYER_STUB=1
