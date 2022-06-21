@@ -1,7 +1,7 @@
 # Raspberry Pi Video Player
 
 Repository for my home project, a video player an old CRT TV using the Raspberry
-PI. I use a 3 B+, but it should work on any one supporting amd64.
+PI. I use a 3 B+, but it should work on any newer one.
 
 ## Steps to install
 
