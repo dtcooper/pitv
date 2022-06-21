@@ -7,7 +7,7 @@ PI. I use a 3 B+, but it should work on any one supporting amd64.
 
 ### On the Raspberry Pi 3 or 4
 
-1. Install [Raspberry Pi OS Lite (64-bit version)](https://www.raspberrypi.com/software/operating-systems/)
+1. Install [Raspberry Pi OS Lite (64-bit version)](https://www.raspberrypi.com/software/operating-systems/).
 2. Install Make, Docker and Docker Compose
     ```bash
     # Install Docker
