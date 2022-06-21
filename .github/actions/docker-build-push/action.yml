@@ -28,7 +28,6 @@ runs:
     -
       name: Set up QEMU
       uses: docker/setup-qemu-action@v2
-      if: inputs.dev == '1'
     -
       name: Login to Github Container Registry
       uses: docker/login-action@v2
