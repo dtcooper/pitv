@@ -6,13 +6,14 @@ import sys
 import time
 import random
 import shutil
+import logging
 
 import asyncio
 from aiohttp import web
 from aiohttp.web import Response
 from aiohttp_sse import sse_response
 
-from .utils import auto_restart
+from utils import auto_restart
 
 
 Video = namedtuple('Video', 'name path size length')
@@ -60,7 +61,9 @@ class OMXPlayer:
                 print(f"Playing {video.stem}")
                 command = await asyncio.subprocess.create_subprocess_exec(self.OMXPLAYER_PATH, '--win', "67,20,670,445", video)
                 await command.wait()
-            await asyncio.sleep(1)
+            else:
+                print('Waiting for videos')
+                await asyncio.sleep(1)
 
     def start(self):
         self.tasks = (

@@ -23,4 +23,4 @@ WORKDIR /app
 RUN poetry install
 
 COPY . /app
-CMD ["python", "run.py"]
+CMD ["run.sh"]

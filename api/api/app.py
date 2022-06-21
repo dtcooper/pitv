@@ -10,7 +10,7 @@ from aiohttp import web
 from aiohttp.web import Response
 from aiohttp_sse import sse_response
 
-from .omxplayer import OMXPlayer
+from omxplayer import OMXPlayer
 
 
 async def hello(request):
@@ -60,3 +60,7 @@ app.on_shutdown.append(shutdown_background_tasks)
 app.router.add_route('GET', '/hello', hello)
 app.router.add_route('GET', '/', index)
 app.router.add_route('GET', '/videos', videos)
+
+
+if __name__ == '__main__':
+    web.run_app(app, host="0.0.0.0", port=8080)
