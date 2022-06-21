@@ -11,7 +11,7 @@ build-api:
 
 up: CONTAINERS:=
 up:
-	$(COMPOSE) up --remove-orphans $(shell source .env; if [ -z "$$DEBUG" -o "$$DEBUG" = 0 ]; then echo "-d"; fi) $(CONTAINERS)
+	$(COMPOSE) up --remove-orphans -d $(CONTAINERS)
 
 CONTAINER:=api
 shell:

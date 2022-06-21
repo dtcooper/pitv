@@ -5,13 +5,18 @@ services:
       context: api
     volumes:
       - "${VIDEOS_DIR:?VIDEOS_DIR needs to be set. See .env file.}:/videos"
+      - /opt/vc:/opt/vc
+      - /boot/config.txt:/config.txt:ro
+    devices:
+      - /dev/vchiq:/dev/vchiq
+      - /dev/fb0:/dev/fb0
   nginx:
     restart: always
-    build:
-      context: nginx
+    image: jonasal/nginx-certbot:3.1.2-nginx1.21.6-alpine
     depends_on:
       - api
     volumes:
+      - ./api/nginx.conf:/etc/nginx/templates/api.conf.template:ro
       - nginx_secrets:/etc/letsencrypt
     ports:
       - 80:80

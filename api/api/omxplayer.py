@@ -4,6 +4,8 @@ from pathlib import Path
 import os
 import sys
 import time
+import random
+import shutil
 
 import asyncio
 from aiohttp import web
@@ -17,6 +19,7 @@ Video = namedtuple('Video', 'name path size length')
 
 
 class OMXPlayer:
+    OMXPLAYER_PATH = os.environ.get('OMXPLAYER_PATH', shutil.which('omxplayer'))
     VIDEOS_DIR = Path(os.environ.get('VIDEOS_DIR', '/videos'))
     VIDEOS_DIR_SCAN_TIME = 15
     TASKS = ('watch_for_videos', 'manage_omxplayer')
@@ -52,7 +55,11 @@ class OMXPlayer:
 
     async def manage_omxplayer(self):
         while True:
-            print(f"manage_omxplayer: {datetime.datetime.now()}")
+            if self.videos:
+                video = random.choice(list(self.videos.values()))
+                print(f"Playing {video.stem}")
+                command = await asyncio.subprocess.create_subprocess_exec(self.OMXPLAYER_PATH, '--win', "67,20,670,445", video)
+                await command.wait()
             await asyncio.sleep(1)
 
     def start(self):
