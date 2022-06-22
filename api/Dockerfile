@@ -11,7 +11,10 @@ RUN dpkg --add-architecture armhf \
     && apt-get update \
     && wget -qO /tmp/omxplayer.deb "$OMXPLAYER_DEB_URL" \
     && apt-get install --no-install-recommends -y \
+        fbi \
+        fbset \
         ffmpeg \
+        imagemagick \
         /tmp/omxplayer.deb \
     && rm -rf /var/lib/apt/lists/* /tmp/omxplayer.deb
 
