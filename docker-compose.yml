@@ -6,17 +6,13 @@ services:
       context: api
     volumes:
       - "${VIDEOS_DIR:?VIDEOS_DIR needs to be set. See .env file.}:/videos"
-      # Disable sharing here, installed /opt/vc via https://forums.raspberrypi.com/viewtopic.php?t=323322
-      # @ https://github.com/raspberrypi/firmware/tree/master/opt/vc
-      - /opt/vc:/opt/vc:ro
-      - /boot/config.txt:/config.txt:ro
       - ./.env:/.env:ro
     devices:
       - /dev/vchiq:/dev/vchiq
       - /dev/fb0:/dev/fb0
-      - /dev/tty1:/dev/tty1
+      - /dev/tty1:/dev/tty1  # For fbi
     cap_add:
-      - SYS_TTY_CONFIG
+      - SYS_TTY_CONFIG  # For fbi
     environment:
       - "DEBUG=${DEBUG:-0}"
 
