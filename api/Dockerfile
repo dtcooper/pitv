@@ -29,9 +29,7 @@ RUN dpkg --add-architecture armhf \
 
 COPY pyproject.toml poetry.lock /app/
 WORKDIR /app
-RUN poetry install \
-    ### XXX for development
-    && poetry update
+RUN poetry install
 
 COPY . /app
 CMD ["./run.sh"]
