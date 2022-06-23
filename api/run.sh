@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# Set backdrop for when omxplayer isn't running
+if ! pgrep fbi >/dev/null ; then
+    fbi -d /dev/fb0 -T 1 -a --nocomments --noverbose backsplash.png >/dev/null
+fi
+
 cd api
 
 if [ "$DEBUG" -a "$DEBUG" != '0' ]; then

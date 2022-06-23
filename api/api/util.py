@@ -1,9 +1,13 @@
 import asyncio
 from functools import wraps
+import os
 import sys
 import time
 import traceback
 
+
+DEBUG = os.environ.get("DEBUG")
+DEBUG = bool(DEBUG and DEBUG != "0")
 
 AUTO_RESTART_TIME = 2.5
 AUTO_RESTART_MIN_TRIES = 5
