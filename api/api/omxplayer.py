@@ -13,8 +13,8 @@ from util import auto_restart
 
 
 class OMXPlayer:
-    OMXPLAYER_CMD_NAME = "omxplayer"
-    OMXPLAYER_PATH = os.environ.get("OMXPLAYER_PATH", shutil.which("omxplayer"))
+    OMXPLAYER_CMD_NAME = os.environ.get("OMXPLAYER_CMD_NAME", "omxplayer")
+    OMXPLAYER_PATH = os.environ.get("OMXPLAYER_PATH", shutil.which(OMXPLAYER_CMD_NAME))
     VIDEOS_DIR = Path(os.environ.get("VIDEOS_DIR", "/videos"))
     VIDEOS_DIR_SCAN_TIME = 15
     TASKS = ("watch_for_videos", "manage_omxplayer")
