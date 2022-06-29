@@ -7,6 +7,13 @@
 # uncomment if you get no picture on HDMI for a default "safe" mode
 #hdmi_safe=1
 
+# uncomment the following to adjust overscan. Use positive numbers if console
+# goes off screen, and negative if there is too much border
+#overscan_left=16
+#overscan_right=16
+#overscan_top=16
+#overscan_bottom=16
+
 # uncomment to force a console size. By default it will be display's size minus
 # overscan.
 #framebuffer_width=1280
@@ -39,8 +46,8 @@
 #dtparam=spi=on
 
 # Uncomment this to enable infrared communication.
-dtoverlay=gpio-ir,gpio_pin=17
-dtoverlay=gpio-ir-tx,gpio_pin=18
+#dtoverlay=gpio-ir,gpio_pin=17
+#dtoverlay=gpio-ir-tx,gpio_pin=18
 
 # Additional overlays and parameters are documented /boot/overlays/README
 
@@ -54,7 +61,7 @@ camera_auto_detect=1
 display_auto_detect=1
 
 # Enable DRM VC4 V3D driver
-#dtoverlay=vc4-fkms-v3d
+#dtoverlay=vc4-kms-v3d
 #max_framebuffers=2
 
 # Run in 64-bit mode
@@ -76,7 +83,7 @@ otg_mode=1
 arm_boost=1
 
 [all]
-#overscan_scale=1
+overscan_scale=1
 overscan_left=67
 overscan_right=50
 overscan_top=20
@@ -84,13 +91,11 @@ overscan_bottom=35
 gpu_mem=64
 hdmi_drive=2
 
-# Overclock stuff
-core_freq=500 # GPU Frequency
-arm_freq=1300 # CPU Frequency
-over_voltage=4 #Electric power sent to CPU / GPU (4 = 1.3V)
-temp_soft_limit=65
-disable_splash=1 # Disables the display of the electric alert screen
+dtoverlay=gpio-fan,gpiopin=14,temp=70000
 
-# Disable wifi
+over_voltage=6
+arm_freq=2000
+
+disable_splash=1
+
 dtoverlay=disable-wifi
-

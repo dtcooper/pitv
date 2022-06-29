@@ -112,7 +112,7 @@ class Player:
             next_video = self.get_next_video()
 
             if next_video:
-                proc = await asyncio.create_subprocess_exec(self.PLAYER_PATH, next_video, env=env)
+                proc = await asyncio.create_subprocess_exec(self.PLAYER_PATH, "--aspect-mode", "stretch", next_video, env=env)
                 logger.info(f"player started: {next_video.name}")
 
                 self.pid = proc.pid
