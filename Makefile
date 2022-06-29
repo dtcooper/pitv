@@ -7,7 +7,7 @@ build: build-api
 
 build: CONTAINERS:=
 build-api:
-	$(COMPOSE) build $(CONTAINERS)
+	$(COMPOSE) build --pull $(CONTAINERS)
 
 up: CONTAINERS:=
 up:

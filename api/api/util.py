@@ -1,27 +1,30 @@
 import asyncio
 from functools import wraps
-import os
+import hmac
+import logging
 import sys
 import time
-import traceback
+import typing
 
+from . import settings
 
-DEBUG = os.environ.get("DEBUG")
-DEBUG = bool(DEBUG and DEBUG != "0")
 
 AUTO_RESTART_TIME = 2.5
 AUTO_RESTART_MIN_TRIES = 5
 AUTO_RESTART_AVERAGE_COROUTINE_FAIL_TIME_BEFORE_EXIT = 15
 
 
-async def auto_restart(coro, *args, **kwargs):
+logger = logging.getLogger(__name__)
+
+
+async def auto_restart_coroutine(coro: typing.Coroutine, *args, **kwargs):
     @wraps(coro)
     async def auto_restart_coro():
         failures = []
 
         while True:
+            logger.info(f"Starting coroutine {coro.__name__} in auto-restart mode")
             start_time = time.monotonic()
-
             try:
                 await coro(*args, **kwargs)
             except asyncio.CancelledError:
@@ -37,16 +40,30 @@ async def auto_restart(coro, *args, **kwargs):
                         sum((cur - prev) for cur, prev in zip(failures[1:], failures[:-1])) / AUTO_RESTART_MIN_TRIES
                     )
                     if average_failure_time <= AUTO_RESTART_AVERAGE_COROUTINE_FAIL_TIME_BEFORE_EXIT:
-                        print(
+                        logger.exception(
                             f"Coroutine failed {AUTO_RESTART_MIN_TRIES} on average less than"
                             f" {AUTO_RESTART_AVERAGE_COROUTINE_FAIL_TIME_BEFORE_EXIT} seconds (average"
                             f" {average_failure_time:.6f}s). Exiting."
                         )
-                        traceback.print_exc()
                         sys.exit(1)
 
-                print(f"Coroutine failed, restarting in {AUTO_RESTART_TIME}s: {coro.__name__}(...)")
-                traceback.print_exc()
+                logger.exception(f"Coroutine failed, restarting in {AUTO_RESTART_TIME}s: {coro.__name__}(...)")
                 await asyncio.sleep(AUTO_RESTART_TIME)
 
     return await auto_restart_coro()
+
+
+def verify_password(password: str):
+    return hmac.compare_digest(
+        password.encode("utf-8"),
+        str(settings.PASSWORD).encode("utf-8"),
+    )
+
+
+def init_pkg_logger():
+    pkg_logger = logging.getLogger(__package__)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter("[{asctime}] {levelname}:{name}:{lineno}:{funcName}: {message}", style="{")
+    handler.setFormatter(formatter)
+    pkg_logger.setLevel("INFO")
+    pkg_logger.addHandler(handler)

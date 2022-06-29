@@ -1,22 +1,27 @@
 #!/bin/sh
 
-# Set backdrop for when omxplayer isn't running
-if ! pgrep fbi >/dev/null ; then
-    fbi -d /dev/fb0 -T 1 -a --nocomments --noverbose backsplash.png >/dev/null
-fi
-
-cd api
-
-if [ "$DEBUG" -a "$DEBUG" != '0' ]; then
-    watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- python app.py
+if [ -f /.env ]; then
+    . /.env
 else
-    gunicorn \
-            --bind 0.0.0.0:8080 \
-            --worker-class aiohttp.worker.GunicornWebWorker \
-            --forwarded-allow-ips '*' \
-            --capture-output \
-            --error-logfile - \
-            --access-logformat '%a %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"' \
-            --access-logfile - \
-        app:app
+    echo "WARNING: Envfile /.env file missing"
 fi
+
+# Set backdrop for when omxplayer isn't running
+if [ -z "$SKIP_FBI" -o "$SKIP_FBI" = '0' ]; then
+    if ! pgrep fbi >/dev/null ; then
+        fbi -d /dev/fb0 -T 1 -a --nocomments --noverbose backsplash.png >/dev/null
+    fi
+fi
+
+EXTRA_ARGS=
+if [ "$DEBUG" -a "$DEBUG" != '0' ]; then
+    EXTRA_ARGS=--reload
+fi
+
+exec uvicorn api.app:app \
+    --workers 1 \
+    --forwarded-allow-ips '*' \
+    --proxy-headers \
+    --host 0.0.0.0 \
+    --port 8000 \
+    $EXTRA_ARGS

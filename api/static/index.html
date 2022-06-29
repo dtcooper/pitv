@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Websocket Testing</title>
+  <script src="//unpkg.com/reconnecting-websocket@4.x.x/dist/reconnecting-websocket-iife.js"></script>
+  <script src="//unpkg.com/@alpinejs/persist@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="alpine.min.js" defer></script>
+  <link rel="stylesheet" href="//unpkg.com/simpledotcss/simple.min.css">
+  <style>
+    [x-cloak] { display: none }
+    body {
+      grid-template-columns: 1fr min(60rem, 90%) 1fr;
+    }
+  </style>
+  <script>
+    function camelize(s) {
+      return s.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); })
+    }
+
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('app', function() {
+        return {
+          state: 0,
+          submitting: false,
+          password: this.$persist(null).as("raspvidPassword"),
+          messages: "",
+          socket: null,
+          videos: [],
+          currentlyPlaying: null,
+
+          login() {
+            console.log('login called')
+            this.submitting = true
+            this.socket.send(this.password)
+          },
+
+          send(data) {
+            this.socket.send(JSON.stringify(data))
+          },
+
+          init() {
+            console.log('init')
+            this.socket = new ReconnectingWebSocket(`${location.origin.replace(/^http/, 'ws')}/backend`)
+            this.socket.onopen = (event) => {
+              console.log('open')
+              this.state = 1
+              if (this.password !== null) {
+                // for whatever reason Alpine doesn't like running this right away
+                // (components dont refresh when accepted = true
+                this.login()
+              }
+              this.connected = true
+            }
+            this.socket.onerror = (event) => {
+              console.log("error")
+              this.state = 0
+            }
+            this.socket.onclose = (event) => {
+              console.log('close')
+              this.state = 0
+            }
+            this.socket.onmessage = (event) => {
+              this.submitting = false
+              let data = event.data
+              if (this.state < 2) {
+                console.log('Got message:', data)
+                if (event.data == 'PASSWORD_ACCEPTED') {
+                  console.log('setting state = 2')
+                  this.state = 2
+                }
+              } else {
+                data = JSON.parse(data)
+                console.log("Got message:", data)
+                for (const key in data) {
+                  this[camelize(key)] = data[key]
+                }
+              }
+            }
+          }
+        }
+      })
+    })
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Websocket Tests</h1>
+  </header>
+  <main x-data="app" x-cloak>
+    <div x-show="state == 1">
+      <input x-model="password">
+      <button @click.prevent="login()" :disabled="submitting">Submit</button>
+    </div>
+    <div x-show="state == 2">
+      <p>Currently Playing: <code x-text="currentlyPlaying ? currentlyPlaying : '(nothing)'"></code><p>
+      <p>
+        Change Movie:
+        <template x-if="videos.length > 1">
+          <div>
+            <select x-ref="videoChoice">
+              <template x-for="video in videos">
+                <option x-text="video" :value="video"></option>
+              </template>
+            </select>
+            <button @click="send({'play': $refs.videoChoice.value})">Play</button>
+            <button @click="send({'play_random': true})">Random</button>
+          </div>
+        </template>
+    </div>
+    <div x-show="state == 0">
+      Not connected.
+    </div>
+  </main>
+</body>
+</html>

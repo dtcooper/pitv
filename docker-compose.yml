@@ -1,7 +1,9 @@
 services:
   api:
+    container_name: api
     restart: always
     image: ghcr.io/dtcooper/raspvid-api:latest
+    stop_signal: SIGINT
     build:
       context: api
     volumes:
@@ -13,14 +15,24 @@ services:
       - /dev/tty1:/dev/tty1  # For fbi
     cap_add:
       - SYS_TTY_CONFIG  # For fbi
-    environment:
-      - "DEBUG=${DEBUG:-0}"
+
+  frontend:
+    container_name: frontend
+    restart: "no"
+    image: node:18
+    volumes:
+      - ./.env:/.env
+      - ./frontend:/app
+    profiles:
+      - frontend
 
   nginx:
+    container_name: nginx
     restart: always
-    image: jonasal/nginx-certbot:3.1.2-nginx1.21.6-alpine
+    image: jonasal/nginx-certbot:3.1.3-nginx1.23.0-alpine
     depends_on:
       - api
+      - logs
     volumes:
       - ./api/nginx.conf:/etc/nginx/templates/api.conf.template:ro
       - nginx_secrets:/etc/letsencrypt

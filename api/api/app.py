@@ -1,99 +1,95 @@
 import asyncio
-import json
+import logging
+import random
+import weakref
 
-from aiohttp import web
-from aiohttp.web import Response
-from aiohttp_sse import sse_response
+from starlette.applications import Starlette
+from starlette.endpoints import WebSocketEndpoint
+from starlette.responses import PlainTextResponse
+from starlette.routing import Mount, Route, WebSocketRoute
+from starlette.staticfiles import StaticFiles
+from starlette.websockets import WebSocket
 
-from omxplayer import OMXPlayer
-
-
-async def sse(request):
-    omxplayer = request.app["omxplayer"]
-
-    async with sse_response(request) as resp:
-        await resp.send(json.dumps(omxplayer.state))
-
-        queue = asyncio.Queue()
-        omxplayer.state_subscriber_queues.add(queue)
-        while True:
-            message = await queue.get()
-            await resp.send(json.dumps(message))
+from . import settings
+from .player import Player
+from .util import init_pkg_logger, verify_password
 
 
-async def start_background_tasks(app):
-    app["omxplayer"] = OMXPlayer(app)
-    app["omxplayer"].start()
+logger = logging.getLogger(__name__)
 
 
-async def shutdown_background_tasks(app):
-    for task in app["omxplayer"].tasks:
-        task.cancel()
-        await task
+def root(request):
+    return PlainTextResponse("There are 40 people in the world and five of them are hamburgers")
 
 
-async def index(request):
-    d = """
-        <html>
-        <body>
-            <script>
-                const evtSource = new EventSource("/sse");
-                evtSource.onmessage = function(e) {
-                    const responseElem = document.getElementById('response')
-                    const mesg = `==== ${new Date} ====\\n${JSON.stringify(JSON.parse(e.data), null, 2)}`
-                    responseElem.innerText = `${mesg}\\n${responseElem.innerText}`
-                }
-            </script>
-            <h1>Response from server:</h1>
-            <pre id="response"></pre>
-        </body>
-    </html>
-    """
-    return Response(text=d, content_type="text/html")
+class BackendEndpoint(WebSocketEndpoint):
+    PASSWORD_ACCEPTED = "PASSWORD_ACCEPTED"
+    PASSWORD_DENIED = "PASSWORD_DENIED"
+
+    authorized = False
+    encoding = "text"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        app: Starlette = self.scope["app"]
+        self.authorized_websockets: weakref.WeakSet = app.state.authorized_websockets
+        self.player: Player = app.state.player
+
+    async def on_receive_unauthorized(self, websocket: WebSocket, text: str):
+        if verify_password(text):
+            self.authorized = True
+            self.encoding = "json"
+            await websocket.send_text(self.PASSWORD_ACCEPTED)
+            await websocket.send_json(self.player.state)
+            self.authorized_websockets.add(websocket)
+        else:
+            await asyncio.sleep(random.uniform(0.25, 1.25))
+            await websocket.send_text(self.PASSWORD_DENIED)
+
+    async def on_receive_authorized(self, websocket: WebSocket, data: dict):
+        video_request = data.get("play")
+        if video_request is not None:
+            self.player.request_video(video_request)
+
+        random_request = data.get("play_random")
+        if random_request:
+            self.player.request_random_video()
+
+    async def on_receive(self, websocket: WebSocket, data):
+        if self.authorized:
+            await self.on_receive_authorized(websocket, data=data)
+        else:
+            await self.on_receive_unauthorized(websocket, text=data)
 
 
-async def videos(request):
-    omxplayer = request.app["omxplayer"]
-    d = """
-        <html>
-        <body>
-            <h1>Play video</h1>
-        """
-
-    if request.method == "POST":
-        post = await request.post()
-        video = post.get("video", "davids-bar-mitzvah.mp4")
-        omxplayer.request_video(video)
-        d += f"<h2>Requested: {video}</h2>"
-
-    d += """
-            <form method="POST" action="/videos">
-                Movie:
-                <select name="video">
-        """
-
-    for option in omxplayer.state["videos"]:
-        d += f'<option value="{option}">{option}</option>'
-
-    d += """
-                </select>
-                <button type="submit">Request</button>
-            </form>
-        </body>
-        </html>
-        """
-
-    return Response(text=d, content_type="text/html")
+async def test_task():
+    while True:
+        print(app.state.authorized_websockets)
+        await asyncio.sleep(1)
 
 
-app = web.Application()
-app.on_startup.append(start_background_tasks)
-app.on_shutdown.append(shutdown_background_tasks)
-app.router.add_route("GET", "/sse", sse)
-app.router.add_route("GET", "/", index)
-app.router.add_route("GET", "/videos", videos)
-app.router.add_route("POST", "/videos", videos)
+async def startup():
+    init_pkg_logger()
+
+    app.state.shutting_down = False
+    app.state.authorized_websockets = weakref.WeakSet()
+    app.state.player = Player(app)
+
+    await app.state.player.startup()
 
 
-if __name__ == "__main__":
-    web.run_app(app, host="0.0.0.0", port=8080)
+async def shutdown():
+    app.state.shutting_down = True
+    await app.state.player.kill()
+
+
+routes = [
+    Route(
+        "/",
+        endpoint=lambda request: PlainTextResponse("There are 40 people in the world and five of them are hamburgers"),
+    ),
+    Mount("/test", app=StaticFiles(directory=settings.PROJECT_ROOT / "static", html=True)),
+    WebSocketRoute("/backend", endpoint=BackendEndpoint),
+]
+
+app = Starlette(routes=routes, on_startup=[startup], on_shutdown=[shutdown])
