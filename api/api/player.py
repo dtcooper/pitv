@@ -104,8 +104,8 @@ class Player:
                     await self.set_state("download", percent)
                 filename = line
 
-        await self.set_state("download", percent)
         await proc.wait()
+        await self.set_state("download", False)
 
         played = False
         if filename is not None:
