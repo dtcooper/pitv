@@ -46,7 +46,7 @@ class BackendEndpoint(WebSocketEndpoint):
             await asyncio.sleep(random.uniform(0.25, 1.25))
             await websocket.send_text(self.PASSWORD_DENIED)
 
-    async def on_receive_authorized(self, websocket: WebSocket, data: dict):
+    def on_receive_authorized(self, websocket: WebSocket, data: dict):
         video_request = data.get("play")
         if video_request is not None:
             self.player.request_video(video_request)
@@ -57,11 +57,11 @@ class BackendEndpoint(WebSocketEndpoint):
 
         url = data.get("download")
         if url:
-            await self.player.request_url(url)
+            asyncio.create_task(self.player.request_url(url))
 
     async def on_receive(self, websocket: WebSocket, data):
         if self.authorized:
-            await self.on_receive_authorized(websocket, data=data)
+            self.on_receive_authorized(websocket, data=data)
         else:
             await self.on_receive_unauthorized(websocket, text=data)
 
