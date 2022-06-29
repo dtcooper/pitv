@@ -31,7 +31,11 @@ class Player:
         self.stop_playing_event = asyncio.Event()
         self.next_video_request = None
         self.pid = None
-        self.state = {"videos": [], "currently_playing": None}
+        self.state = {
+            "videos": [],
+            "currently_playing": None,
+            "download": False,
+        }
 
     async def _kill(self, signal):
         proc = await asyncio.create_subprocess_exec(
@@ -45,6 +49,7 @@ class Player:
         await proc.wait()
 
     async def kill(self):
+        logger.info("Killing omxplayer with SIGINT + SIGKILL")
         await self._kill("SIGINT")
         await asyncio.sleep(self.SLEEP_BETWEEN_KILL)
         await self._kill("SIGKILL")
@@ -54,10 +59,6 @@ class Player:
         for task_name in self.TASKS:
             task = getattr(self, task_name)
             asyncio.create_task(auto_restart_coroutine(task))
-
-    async def broadcast(self, message):
-        for websocket in self.websockets:
-            await websocket.send_json(message)
 
     async def watch_for_videos(self):
         while not self.app.state.shutting_down:
@@ -77,7 +78,7 @@ class Player:
 
     async def request_url(self, url):
         logger.info(f"Requesting URL: {url}")
-        await self.broadcast({"download": "Downloading..."})
+        await self.set_state("download", 0)
 
         proc = await asyncio.create_subprocess_exec(
             self.YT_DLP_PATH,
@@ -99,11 +100,11 @@ class Player:
             if line := (await proc.stdout.readline()).decode("utf-8").strip():
                 match = self.DOWNLOAD_RE.search(line)
                 if match:
-                    percent = round(float(match.group(1)), 2)
-                    await self.broadcast({"download": f"{percent:.01f}% downloaded"})
+                    percent = round(float(match.group(1)), 1)
+                    await self.set_state("download", percent)
                 filename = line
 
-        await self.broadcast({"download": False})
+        await self.set_state("download", percent)
         await proc.wait()
 
         played = False
@@ -148,7 +149,9 @@ class Player:
         old_value = self.state[key]
         if old_value != value:
             self.state[key] = value
-            await self.broadcast({key: value})
+            message = {key: value}
+            for websocket in self.websockets:
+                await websocket.send_json(message)
 
     async def run_player(self):
         env = os.environ.copy()
@@ -170,21 +173,24 @@ class Player:
                     (proc_wait_task := asyncio.create_task(proc.wait())),
                     (stop_playing_wait_task := asyncio.create_task(self.stop_playing_event.wait())),
                 }
-                done, pending = await asyncio.wait(wait_tasks, return_when=asyncio.FIRST_COMPLETED)
+                _, pending = await asyncio.wait(wait_tasks, return_when=asyncio.FIRST_COMPLETED)
 
-                if stop_playing_wait_task in done:
-                    logger.info("got stop playing event")
-                    self.stop_playing_event.clear()
+                if stop_playing_wait_task in pending:
+                    # Rather than cancel the task (doesn't seem to work), manually trigger it being done
+                    self.stop_playing_event.set()
                 else:
-                    stop_playing_wait_task.cancel()
-                    await stop_playing_wait_task
+                    logger.info("Got stop playing event")
+
+                self.stop_playing_event.clear()
+                await stop_playing_wait_task
 
                 if proc_wait_task in pending:
                     await self.kill()
                     await proc_wait_task
 
                 self.pid = None
-                logger.info("player exited")
+                logger.info("Player exited. Restarting")
+                await asyncio.sleep(1)
 
             else:
                 logger.warning("No videos to play.")

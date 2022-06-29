@@ -5,7 +5,7 @@ import weakref
 
 from starlette.applications import Starlette
 from starlette.endpoints import WebSocketEndpoint
-from starlette.responses import PlainTextResponse
+from starlette.responses import RedirectResponse
 from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 from starlette.websockets import WebSocket
@@ -18,8 +18,8 @@ from .util import init_pkg_logger, verify_password
 logger = logging.getLogger(__name__)
 
 
-def root(request):
-    return PlainTextResponse("There are 40 people in the world and five of them are hamburgers")
+def index(request):
+    return RedirectResponse(settings.INDEX_REDIRECT_URL)
 
 
 class BackendEndpoint(WebSocketEndpoint):
@@ -88,12 +88,9 @@ async def shutdown():
 
 
 routes = [
-    Route(
-        "/",
-        endpoint=lambda request: PlainTextResponse("There are 40 people in the world and five of them are hamburgers"),
-    ),
     Mount("/test", app=StaticFiles(directory=settings.PROJECT_ROOT / "static", html=True)),
     WebSocketRoute("/backend", endpoint=BackendEndpoint),
+    Route("/{rest:path}", endpoint=index),
 ]
 
 app = Starlette(routes=routes, on_startup=[startup], on_shutdown=[shutdown])

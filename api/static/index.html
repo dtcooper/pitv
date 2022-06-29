@@ -111,10 +111,12 @@
         </template>
       </p>
       <p>
-        <p x-show="download" x-text="`Progress: ${download}`"><p>
-        URL:
+        <p x-show="download !== false">
+          Downloading: <progress min="0" max="100" :value="download" style="width: 350px"></progress>
+          <span x-text="download"></span>%
+        </p>
         <input x-ref="download" value="https://www.youtube.com/watch?v=ttGCum0hG1g">
-        <button @click="send({'download': $refs.download.value})">Play</button>
+        <button @click="send({'download': $refs.download.value})" :disabled="download !== false">Play</button>
       </p>
     </div>
     <div x-show="state == 0">
