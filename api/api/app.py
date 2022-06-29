@@ -55,6 +55,10 @@ class BackendEndpoint(WebSocketEndpoint):
         if random_request:
             self.player.request_random_video()
 
+        url = data.get("download")
+        if url:
+            await self.player.request_url(url)
+
     async def on_receive(self, websocket: WebSocket, data):
         if self.authorized:
             await self.on_receive_authorized(websocket, data=data)

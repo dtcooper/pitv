@@ -29,6 +29,7 @@
           socket: null,
           videos: [],
           currentlyPlaying: null,
+          download: false,
 
           login() {
             console.log('login called')
@@ -108,6 +109,13 @@
             <button @click="send({'play_random': true})">Random</button>
           </div>
         </template>
+      </p>
+      <p>
+        <p x-show="download" x-text="`Progress: ${download}`"><p>
+        URL:
+        <input x-ref="download" value="https://www.youtube.com/watch?v=ttGCum0hG1g">
+        <button @click="send({'download': $refs.download.value})">Play</button>
+      </p>
     </div>
     <div x-show="state == 0">
       Not connected.

@@ -1,7 +1,9 @@
 import asyncio
 import logging
 import os
+from pathlib import Path
 import random
+import re
 import shutil
 
 from starlette.applications import Starlette
@@ -14,12 +16,13 @@ logger = logging.getLogger(__name__)
 
 
 class Player:
-    VIDEOS_DIR = settings.VIDEOS_DIR
-    SLEEP_BETWEEN_KILL = 0.2
+    DOWNLOAD_RE = re.compile(r"^\[download\]\s*([0-9\.]+)")
     PLAYER_PROC_NAME = "omxplayer.bin"
     PLAYER_PATH = shutil.which(PLAYER_PROC_NAME)
-
+    SLEEP_BETWEEN_KILL = 0.2
     TASKS = ["watch_for_videos", "run_player"]
+    VIDEOS_DIR = settings.VIDEOS_DIR
+    YT_DLP_PATH = shutil.which("yt-dlp")
 
     def __init__(self, app: Starlette):
         self.videos = set()
@@ -52,6 +55,10 @@ class Player:
             task = getattr(self, task_name)
             asyncio.create_task(auto_restart_coroutine(task))
 
+    async def broadcast(self, message):
+        for websocket in self.websockets:
+            await websocket.send_json(message)
+
     async def watch_for_videos(self):
         while not self.app.state.shutting_down:
             await self.scan_for_videos()
@@ -67,6 +74,48 @@ class Player:
             self.stop_playing_event.set()
         else:
             logger.info(f"Invalid video request: {filename}")
+
+    async def request_url(self, url):
+        logger.info(f"Requesting URL: {url}")
+        await self.broadcast({"download": "Downloading..."})
+
+        proc = await asyncio.create_subprocess_exec(
+            self.YT_DLP_PATH,
+            "--newline",
+            "--no-playlist",
+            "--no-continue",
+            "-f",
+            "b",
+            "--exec",
+            "echo {}",
+            "--output",
+            "/tmp/downloaded-url.%(ext)s",
+            url,
+            stdout=asyncio.subprocess.PIPE,
+        )
+
+        filename = None
+        while not proc.stdout.at_eof():
+            if line := (await proc.stdout.readline()).decode("utf-8").strip():
+                match = self.DOWNLOAD_RE.search(line)
+                if match:
+                    percent = round(float(match.group(1)), 2)
+                    await self.broadcast({"download": f"{percent:.01f}% downloaded"})
+                filename = line
+
+        await self.broadcast({"download": False})
+        await proc.wait()
+
+        played = False
+        if filename is not None:
+            path = Path(filename)
+            if path.exists():
+                self.next_video_request = path
+                self.stop_playing_event.set()
+                played = True
+
+        if not played:
+            logger.warning(f"An error occurred while downloading: {url}")
 
     def request_random_video(self):
         logger.info("Requesting random video")
@@ -96,13 +145,10 @@ class Player:
             await self.set_state("videos", sorted(v.name for v in self.videos))
 
     async def set_state(self, key, value):
-        # TODO run as a asyncio.create_task(...)?
         old_value = self.state[key]
         if old_value != value:
             self.state[key] = value
-            message = {key: value}
-            for websocket in self.websockets:
-                await websocket.send_json(message)
+            await self.broadcast({key: value})
 
     async def run_player(self):
         env = os.environ.copy()
@@ -112,7 +158,9 @@ class Player:
             next_video = self.get_next_video()
 
             if next_video:
-                proc = await asyncio.create_subprocess_exec(self.PLAYER_PATH, "--aspect-mode", "stretch", next_video, env=env)
+                proc = await asyncio.create_subprocess_exec(
+                    self.PLAYER_PATH, "--aspect-mode", "stretch", next_video, env=env
+                )
                 logger.info(f"player started: {next_video.name}")
 
                 self.pid = proc.pid
