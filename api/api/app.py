@@ -35,33 +35,43 @@ class BackendEndpoint(WebSocketEndpoint):
         self.authorized_websockets: weakref.WeakSet = app.state.authorized_websockets
         self.player: Player = app.state.player
 
+    def command_play(self, video_request):
+        self.player.request_video(video_request)
+
+    def command_play_random(self, _):
+        self.player.request_random_video()
+
+    def command_download(self, url):
+        asyncio.create_task(self.player.request_url(url))
+
+    async def command_seek(self, seconds):
+        await self.player.seek(seconds)
+
     async def on_receive_unauthorized(self, websocket: WebSocket, text: str):
         if verify_password(text):
             self.authorized = True
             self.encoding = "json"
             await websocket.send_text(self.PASSWORD_ACCEPTED)
-            await websocket.send_json(self.player.state)
+            await websocket.send_json(self.player.get_state())
             self.authorized_websockets.add(websocket)
         else:
             await asyncio.sleep(random.uniform(0.25, 1.25))
             await websocket.send_text(self.PASSWORD_DENIED)
 
-    def on_receive_authorized(self, websocket: WebSocket, data: dict):
-        video_request = data.get("play")
-        if video_request is not None:
-            self.player.request_video(video_request)
-
-        random_request = data.get("play_random")
-        if random_request:
-            self.player.request_random_video()
-
-        url = data.get("download")
-        if url:
-            asyncio.create_task(self.player.request_url(url))
+    async def on_receive_authorized(self, websocket: WebSocket, data: dict):
+        for command, value in data.items():
+            method = getattr(self, f"command_{command}", None)
+            if method is not None:
+                if asyncio.iscoroutinefunction(method):
+                    await method(value)
+                else:
+                    method(value)
+            else:
+                logger.warning(f"Invalid command: {command}")
 
     async def on_receive(self, websocket: WebSocket, data):
         if self.authorized:
-            self.on_receive_authorized(websocket, data=data)
+            await self.on_receive_authorized(websocket, data=data)
         else:
             await self.on_receive_unauthorized(websocket, text=data)
 
@@ -82,9 +92,9 @@ async def startup():
     await app.state.player.startup()
 
 
-async def shutdown():
+def shutdown():
     app.state.shutting_down = True
-    await app.state.player.kill()
+    app.state.player.kill_blocking()
 
 
 routes = [

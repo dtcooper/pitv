@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Websocket Testing</title>
+  <script src="//unpkg.com/dayjs@1.x.x/dayjs.min.js"></script>
+  <script src="//unpkg.com/dayjs@1.x.x/plugin/utc.js"></script>
+  <script src="//unpkg.com/dayjs@1.x.x/plugin/duration.js"></script>
   <script src="//unpkg.com/reconnecting-websocket@4.x.x/dist/reconnecting-websocket-iife.js"></script>
   <script src="//unpkg.com/@alpinejs/persist@3.x.x/dist/cdn.min.js" defer></script>
   <script src="alpine.min.js" defer></script>
@@ -15,8 +18,11 @@
     }
   </style>
   <script>
+    dayjs.extend(window.dayjs_plugin_utc)
+    dayjs.extend(window.dayjs_plugin_duration)
+
     function camelize(s) {
-      return s.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); })
+      return s.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase() })
     }
 
     document.addEventListener('alpine:init', () => {
@@ -29,7 +35,9 @@
           socket: null,
           videos: [],
           currentlyPlaying: null,
-          download: false,
+          download: null,
+          position: null,
+          duration: null,
 
           login() {
             console.log('login called')
@@ -39,6 +47,16 @@
 
           send(data) {
             this.socket.send(JSON.stringify(data))
+          },
+
+          getProgress() {
+            if (this.position !== null && this.duration !== null) {
+              const position = dayjs.duration(this.position, 'second').format("H:mm:ss")
+              const duration = dayjs.duration(this.duration, 'second').format("H:mm:ss")
+              return `${position}/${duration}`
+            } else {
+              return '(none)'
+            }
           },
 
           init() {
@@ -95,7 +113,16 @@
       <button @click.prevent="login()" :disabled="submitting">Submit</button>
     </div>
     <div x-show="state == 2">
-      <p>Currently Playing: <code x-text="currentlyPlaying ? currentlyPlaying : '(nothing)'"></code><p>
+      <p>Currently Playing: <code x-text="currentlyPlaying || '(nothing)'"></code><p>
+      <p>Progress: <code x-text="getProgress"></code></p>
+      <p>
+        <button @click="send({'seek': -15 * 60})" :disabled="position === null || duration === null">&#8810;15m</button>
+        <button @click="send({'seek': -60})" :disabled="position === null || duration === null">&#8810;1m</button>
+        <button @click="send({'seek': -15})" :disabled="position === null || duration === null">&#8810;15s</button>
+        <button @click="send({'seek': 15})" :disabled="position === null || duration === null">15s&#8811;</button>
+        <button @click="send({'seek': 60})" :disabled="position === null || duration === null">1m&#8811;</button>
+        <button @click="send({'seek': 15 * 60})" :disabled="position === null || duration === null">15m&#8811;</button>
+      </p>
       <p>
         Change Movie:
         <template x-if="videos.length > 1">
@@ -111,12 +138,12 @@
         </template>
       </p>
       <p>
-        <p x-show="download !== false">
+        <p x-show="download !== null">
           Downloading: <progress min="0" max="100" :value="download" style="width: 350px"></progress>
           <span x-text="download"></span>%
         </p>
         <input x-ref="download" value="https://www.youtube.com/watch?v=ttGCum0hG1g">
-        <button @click="send({'download': $refs.download.value})" :disabled="download !== false">Play</button>
+        <button @click="send({'download': $refs.download.value})" :disabled="download !== null">Play</button>
       </p>
     </div>
     <div x-show="state == 0">

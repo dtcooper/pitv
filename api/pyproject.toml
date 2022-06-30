@@ -5,8 +5,9 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
+dbus-next = "^0.2.3"
 python = "^3.10"
-starlette = "^0.20.3"
+starlette = "^0.20.4"
 uvicorn = {extras = ["standard"], version = "^0.18.2"}
 yt-dlp = "^2022.6.29"
 

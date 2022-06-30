@@ -15,7 +15,7 @@ up:
 
 CONTAINER:=api
 shell:
-	$(COMPOSE) run --rm --service-ports --use-aliases $(CONTAINER) bash
+	$(COMPOSE) run --rm --service-ports --use-aliases $(CONTAINER) bash || true
 
 down:
 	$(COMPOSE) down --remove-orphans
