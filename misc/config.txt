@@ -84,7 +84,7 @@ arm_boost=1
 
 [all]
 overscan_scale=1
-overscan_left=67
+overscan_left=63
 overscan_right=50
 overscan_top=20
 overscan_bottom=35
