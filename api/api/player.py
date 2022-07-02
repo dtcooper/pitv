@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 from pathlib import Path
 import random
 import re
@@ -25,6 +24,7 @@ class Player:
     DOWNLOAD_RE = re.compile(r"^\[download\]\s*([0-9\.]+)")
     PLAYER_PATH = shutil.which("omxplayer")
     PLAYER_PROC_NAMES = ["omxplayer", "omxplayer.bin"]
+    DBUS_PROC_NAME = "dbus-daemon"
     SLEEP_BETWEEN_KILL = 0.2
     TASKS = ["watch_for_videos", "run_player", "push_progress"]
     VIDEOS_DIR = settings.VIDEOS_DIR
@@ -44,6 +44,7 @@ class Player:
             "download": None,
             "position": None,
             "duration": None,
+            "playing": False,
         }
 
     async def _kill(self, signal: int):
@@ -58,11 +59,19 @@ class Player:
         await proc.wait()
 
     def _kill_blocking(self, signal: int):
+        proc_names = list(self.PLAYER_PROC_NAMES)
+        if settings.DEBUG:
+            proc_names.append(self.DBUS_PROC_NAME)
         subprocess.run(
-            ["killall", "-s", signal] + self.PLAYER_PROC_NAMES,
+            ["killall", "-s", signal] + proc_names,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+
+    def _app_running(self):
+        if self.app.state.shutting_down:
+            raise asyncio.CancelledError()
+        return True
 
     async def kill(self):
         logger.info("Killing omxplayer with SIGINT + SIGKILL")
@@ -83,11 +92,9 @@ class Player:
             asyncio.create_task(auto_restart_coroutine(task))
 
     async def watch_for_videos(self):
-        while not self.app.state.shutting_down:
+        while self._app_running():
             await self.scan_for_videos()
             await asyncio.sleep(settings.VIDEOS_DIR_SCAN_TIME)
-
-        raise asyncio.CancelledError()
 
     def request_video(self, filename):
         path = self.VIDEOS_DIR / filename
@@ -222,11 +229,11 @@ class Player:
     async def push_progress(self):
         bus = await self.get_dbus_message_bus()
 
-        while not self.app.state.shutting_down:
-            state = {"position": None, "duration": None}
+        while self._app_running():
+            state = {}
             error = False
 
-            for member in ("Position", "Duration"):
+            for member in ("Position", "Duration", "PlaybackStatus"):
                 message = DBusMessage(
                     destination="org.mpris.MediaPlayer2.omxplayer",
                     path="/org/mpris/MediaPlayer2",
@@ -237,23 +244,21 @@ class Player:
                 )
                 reply = await bus.call(message)
                 if reply.message_type == DBusMessageType.METHOD_RETURN:
-                    state[member.lower()] = round(reply.body[0] / 1000000)
+                    if member == "PlaybackStatus":
+                        state["playing"] = reply.body[0] == "Playing"
+                    else:
+                        state[member.lower()] = round(reply.body[0] / 1000000)
                 else:
                     error = True
 
-            if error:
-                state = {"position": None, "duration": None}
+            if error or not state["playing"]:
+                state = {"position": None, "duration": None, "playing": False}
 
             await self.set_state_multiple(state)
-            await asyncio.sleep(0.125)
-
-        raise asyncio.CancelledError()
+            await asyncio.sleep(0.25)
 
     async def run_player(self):
-        env = os.environ.copy()
-        env["LD_LIBRARY_PATH"] = "/opt/vc/lib"
-
-        while not self.app.state.shutting_down:
+        while self._app_running():
             video_path = self.get_next_video_path()
 
             if video_path is not None:
@@ -263,7 +268,6 @@ class Player:
                     "--aspect-mode",
                     "stretch",
                     video_path,
-                    env=env,
                     stdout=subprocess.DEVNULL,
                 )
                 logger.info(f"player started: {video_path.name}")
@@ -299,5 +303,3 @@ class Player:
                 await self.set_state("currently_playing", None)
 
             await asyncio.sleep(5)
-
-        raise asyncio.CancelledError()

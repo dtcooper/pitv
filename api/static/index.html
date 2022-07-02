@@ -38,6 +38,7 @@
           download: null,
           position: null,
           duration: null,
+          playing: false,
 
           login() {
             console.log('login called')
@@ -50,7 +51,7 @@
           },
 
           getProgress() {
-            if (this.position !== null && this.duration !== null) {
+            if (this.playing) {
               const position = dayjs.duration(this.position, 'second').format("H:mm:ss")
               const duration = dayjs.duration(this.duration, 'second').format("H:mm:ss")
               return `${position}/${duration}`
@@ -116,12 +117,12 @@
       <p>Currently Playing: <code x-text="currentlyPlaying || '(nothing)'"></code><p>
       <p>Progress: <code x-text="getProgress"></code></p>
       <p>
-        <button @click="send({'seek': -15 * 60})" :disabled="position === null || duration === null">&#8810;15m</button>
-        <button @click="send({'seek': -60})" :disabled="position === null || duration === null">&#8810;1m</button>
-        <button @click="send({'seek': -15})" :disabled="position === null || duration === null">&#8810;15s</button>
-        <button @click="send({'seek': 15})" :disabled="position === null || duration === null">15s&#8811;</button>
-        <button @click="send({'seek': 60})" :disabled="position === null || duration === null">1m&#8811;</button>
-        <button @click="send({'seek': 15 * 60})" :disabled="position === null || duration === null">15m&#8811;</button>
+        <button @click="send({'seek': -15 * 60})" :disabled="!playing">&#8810;15m</button>
+        <button @click="send({'seek': -60})" :disabled="!playing">&#8810;1m</button>
+        <button @click="send({'seek': -15})" :disabled="!playing">&#8810;15s</button>
+        <button @click="send({'seek': 15})" :disabled="!playing">15s&#8811;</button>
+        <button @click="send({'seek': 60})" :disabled="!playing">1m&#8811;</button>
+        <button @click="send({'seek': 15 * 60})" :disabled="!playing">15m&#8811;</button>
       </p>
       <p>
         Change Movie:
