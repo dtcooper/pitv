@@ -11,6 +11,7 @@ from dbus_next import Message as DBusMessage
 from dbus_next import MessageType as DBusMessageType
 from dbus_next.aio import MessageBus as DBusMessageBus
 from starlette.applications import Starlette
+from watchfiles import awatch, Change as WatchChange
 
 from . import settings
 from .util import auto_restart_coroutine
@@ -32,14 +33,14 @@ class Player:
 
     def __init__(self, app: Starlette):
         self._dbus_message_bus = None
-        self.videos = set()
+        self.videos = set(self.VIDEOS_DIR.iterdir())
         self.app = app
         self.websockets = app.state.authorized_websockets
         self.stop_playing_event = asyncio.Event()
         self.next_video_request = None
         self.pid = None
         self._state = {
-            "videos": [],
+            "videos": sorted(v.name for v in self.videos),
             "currently_playing": None,
             "download": None,
             "position": None,
@@ -92,9 +93,17 @@ class Player:
             asyncio.create_task(auto_restart_coroutine(task))
 
     async def watch_for_videos(self):
-        while self._app_running():
-            await self.scan_for_videos()
-            await asyncio.sleep(settings.VIDEOS_DIR_SCAN_TIME)
+        logger.info(f"Saw {len(self.videos)} videos")
+        async for changes in awatch(self.VIDEOS_DIR, watch_filter=lambda change, path: change != WatchChange.modified):
+            for change, filename in changes:
+                path = Path(filename)
+                if change == WatchChange.added:
+                    logger.info(f"Added video: {path.name}")
+                    self.videos.add(path)
+                elif change == WatchChange.deleted:
+                    logger.info(f"Removed video: {path.name}")
+                    self.videos.remove(path)
+            await self.set_state("videos", sorted(v.name for v in self.videos))
 
     def request_video(self, filename):
         path = self.VIDEOS_DIR / filename
@@ -166,19 +175,6 @@ class Player:
             next_video = random.choice(list(self.videos))
 
         return next_video
-
-    async def scan_for_videos(self):
-        new_videos = set(self.VIDEOS_DIR.iterdir())
-        if self.videos != new_videos:
-            added = new_videos - self.videos
-            removed = self.videos - new_videos
-            if added:
-                logger.info(f"Added {len(added)} video(s): {', '.join(v.name for v in sorted(added))}")
-            if removed:
-                logger.info(f"Removed {len(removed)} video(s): {', '.join(v.name for v in sorted(removed))}")
-
-            self.videos = new_videos
-            await self.set_state("videos", sorted(v.name for v in self.videos))
 
     async def set_state(self, key, value):
         await self.set_state_multiple({key: value})
