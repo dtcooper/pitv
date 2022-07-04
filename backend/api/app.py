@@ -59,15 +59,18 @@ class BackendEndpoint(WebSocketEndpoint):
             await websocket.send_text(self.PASSWORD_DENIED)
 
     async def on_receive_authorized(self, websocket: WebSocket, data: dict):
-        for command, value in data.items():
-            method = getattr(self, f"command_{command}", None)
-            if method is not None:
-                if asyncio.iscoroutinefunction(method):
-                    await method(value)
+        if isinstance(data, dict):
+            for command, value in data.items():
+                method = getattr(self, f"command_{command}", None)
+                if method is not None:
+                    if asyncio.iscoroutinefunction(method):
+                        await method(value)
+                    else:
+                        method(value)
                 else:
-                    method(value)
-            else:
-                logger.warning(f"Invalid command: {command}")
+                    logger.warning(f"Invalid command: {command}")
+        else:
+            logger.warning(f"Invalid JSON data: {data}")
 
     async def on_receive(self, websocket: WebSocket, data):
         if self.authorized:

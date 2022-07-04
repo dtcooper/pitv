@@ -187,7 +187,10 @@ class Player:
                 self._state[key] = message[key] = value
         if message:
             for websocket in self.websockets:
-                await websocket.send_json(message)
+                try:
+                    await websocket.send_json(message)
+                except RuntimeError:
+                    logger.exception("Couldn't write to websocket")
 
     def get_state(self, key=None):
         return self._state if key is None else self._state[key]
