@@ -79,12 +79,6 @@ class BackendEndpoint(WebSocketEndpoint):
             await self.on_receive_unauthorized(websocket, text=data)
 
 
-async def test_task():
-    while True:
-        print(app.state.authorized_websockets)
-        await asyncio.sleep(1)
-
-
 async def startup():
     init_pkg_logger()
 

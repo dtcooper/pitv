@@ -6,10 +6,12 @@ import sys
 import time
 import typing
 
+from uvicorn.logging import ColourizedFormatter
+
 from . import settings
 
 
-AUTO_RESTART_TIME = 2.5
+AUTO_RESTART_SLEEP_TIME = 2.5
 AUTO_RESTART_MIN_TRIES = 5
 AUTO_RESTART_AVERAGE_COROUTINE_FAIL_TIME_BEFORE_EXIT = 15
 
@@ -47,8 +49,8 @@ async def auto_restart_coroutine(coro: typing.Coroutine, *args, **kwargs):
                         )
                         sys.exit(1)
 
-                logger.exception(f"Coroutine failed, restarting in {AUTO_RESTART_TIME}s: {coro.__name__}(...)")
-                await asyncio.sleep(AUTO_RESTART_TIME)
+                logger.exception(f"Coroutine failed, restarting in {AUTO_RESTART_SLEEP_TIME}s: {coro.__name__}(...)")
+                await asyncio.sleep(AUTO_RESTART_SLEEP_TIME)
 
     return await auto_restart_coro()
 
@@ -63,7 +65,9 @@ def verify_password(password: str):
 def init_pkg_logger():
     pkg_logger = logging.getLogger(__package__)
     handler = logging.StreamHandler()
-    formatter = logging.Formatter("[{asctime}] {levelname}:{name}:{lineno}:{funcName}: {message}", style="{")
+    formatter = ColourizedFormatter(
+        "{levelprefix:<8} {asctime} {name}:{lineno}:{funcName}: {message}", style="{", use_colors=True
+    )
     handler.setFormatter(formatter)
     pkg_logger.setLevel("INFO")
     pkg_logger.addHandler(handler)

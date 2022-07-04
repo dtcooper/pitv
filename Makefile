@@ -1,19 +1,20 @@
 COMPOSE:=docker compose
 PI_DIR=pi
 
-.PHONY=build build-api
-
-build: build-api
+.PHONY=build build frontend up down shell
 
 build: CONTAINERS:=
-build-api:
+build:
 	$(COMPOSE) build --pull $(CONTAINERS)
+
+frontend:
+	$(COMPOSE) build --pull frontend
 
 up: CONTAINERS:=
 up:
 	$(COMPOSE) up --remove-orphans -d $(CONTAINERS)
 
-CONTAINER:=api
+shell: CONTAINER:=backend
 shell:
 	$(COMPOSE) run --rm --service-ports --use-aliases $(CONTAINER) bash || true
 
