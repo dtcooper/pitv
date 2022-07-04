@@ -22,6 +22,11 @@ ENV PATH="/root/.poetry/bin:${PATH}"
 
 # Need to add armhf because omxplayer is armhf, not arm64
 RUN dpkg --add-architecture armhf \
+    # Add raspberry pi debian apt repo
+    && wget -qO - https://archive.raspberrypi.org/debian/raspberrypi.gpg.key \
+        | gpg --dearmor > /etc/apt/trusted.gpg.d/raspberrypi.gpg \
+    && echo "deb http://archive.raspberrypi.org/debian/ $(sh -c '. /etc/os-release; echo $VERSION_CODENAME') main" \
+        > /etc/apt/sources.list.d/raspi.list \
     && apt-get update \
     && apt-get upgrade -y \
     && wget -qO /tmp/omxplayer.deb "$OMXPLAYER_DEB_URL" \
