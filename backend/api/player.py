@@ -7,11 +7,10 @@ import shutil
 import subprocess
 import time
 
-from dbus_next import Message as DBusMessage
-from dbus_next import MessageType as DBusMessageType
+from dbus_next import Message as DBusMessage, MessageType as DBusMessageType
 from dbus_next.aio import MessageBus as DBusMessageBus
 from starlette.applications import Starlette
-from watchfiles import awatch, Change as WatchChange
+from watchfiles import Change as WatchChange, awatch
 
 from . import settings
 from .util import auto_restart_coroutine
