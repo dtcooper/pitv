@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=devnice-width, initial-scale=1.0">
   <title>{{ TITLE or "Raspberry Pi Video Player" }}</title>
   <link href="{{ static("styles.css") }}" rel="stylesheet">
-  <script>
-    const ALPINE_VERSION = 'github'
-  </script>
   <script src="{{ static("script.js") }}" defer></script>
 </head>
 <body class="min-h-screen">
-  <div class="flex flex-col items-center justify-center mx-auto min-h-screen space-y-10" x-data="{text: $persist('hi mom!') }">
+  <div
+    class="flex flex-col items-center justify-center mx-auto min-h-screen space-y-10"
+  x-data="{text: $persist('hi mom!') }">
     <h1 class="text-3xl font-bold underline">
       {{ TITLE or "Raspberry Pi Video Player" }}: {{ DOMAIN_NAME }}
     </h1>

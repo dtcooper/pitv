@@ -1,9 +1,9 @@
 module.exports = {
   content: [
-    "./src/**/*.njk"
+    './src/**/*.njk'
   ],
   theme: {
-    extend: {},
+    extend: {}
   },
   daisyui: {
     themes: [{
@@ -27,5 +27,5 @@ module.exports = {
       }
     }]
   },
-  plugins: [require("daisyui")],
+  plugins: [require('daisyui')]
 }

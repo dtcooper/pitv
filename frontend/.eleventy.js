@@ -1,20 +1,18 @@
-const process = require("process")
-const path = require('path')
-
+const process = require('process')
 
 module.exports = (eleventyConfig) => {
   eleventyConfig.setBrowserSyncConfig({
-    files: ["dist/**/*"],
+    files: ['dist/**/*'],
     open: true
   })
 
-  eleventyConfig.addWatchTarget("../.env")
+  eleventyConfig.addWatchTarget('../.env')
 
   eleventyConfig.setNunjucksEnvironmentOptions({
     throwOnUndefined: true
   })
-  eleventyConfig.addNunjucksGlobal("static", function(url) {
-    if (process.env.NODE_ENV == 'production') {
+  eleventyConfig.addNunjucksGlobal('static', function (url) {
+    if (process.env.NODE_ENV === 'production') {
       const urlNoExt = url.split('.').slice(0, -1).join('.')
       const ext = url.split('.').at(-1)
       return `${urlNoExt}.min.${ext}`
@@ -25,8 +23,8 @@ module.exports = (eleventyConfig) => {
 
   return {
     dir: {
-      input: "src",
-      output: "dist"
+      input: 'src',
+      output: 'dist'
     }
   }
 }
