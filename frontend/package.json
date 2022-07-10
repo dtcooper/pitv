@@ -1,0 +1,31 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "NODE_ENV=development npm-run-all -p dev:*",
+    "dev:11ty": "eleventy --serve",
+    "dev:css": "tailwindcss --input src/styles.css --output dist/styles.css --watch",
+    "dev:js": "esbuild --bundle src/script.js --outfile=dist/script.js --sourcemap --watch",
+    "clean": "rm -rf dist/",
+    "build": "NODE_ENV=production npm-run-all clean -p build:* -s build:css:*",
+    "build:11ty": "eleventy",
+    "build:css": "tailwindcss --input src/styles.css --output dist/styles.css",
+    "build:css:minify": "esbuild dist/styles.css --outfile=dist/styles.min.css --sourcemap --minify && rm dist/styles.css",
+    "build:js": "esbuild --bundle src/script.js --outfile=dist/script.min.js --sourcemap --minify"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@11ty/eleventy": "^1.0.1",
+    "@alpinejs/persist": "https://gitpkg.now.sh/alpinejs/alpine/packages/persist?main",
+    "alpinejs": "https://gitpkg.now.sh/alpinejs/alpine/packages/alpinejs?main",
+    "daisyui": "^2.19.0",
+    "dotenv": "^16.0.1",
+    "esbuild": "^0.14.48",
+    "npm-run-all": "^4.1.5",
+    "tailwindcss": "^3.1.5"
+  }
+}
