@@ -229,6 +229,19 @@ class Player:
         )
         await bus.call(message)
 
+    async def set_position(self, seconds):
+        bus = await self.get_dbus_message_bus()
+        message = DBusMessage(
+            destination="org.mpris.MediaPlayer2.omxplayer",
+            path="/org/mpris/MediaPlayer2",
+            interface="org.mpris.MediaPlayer2.Player",
+            member="SetPosition",
+            signature="ox",
+            body=["/not/used", round(seconds * 1000000)],
+        )
+        print(message.body)
+        await bus.call(message)
+
     async def push_progress(self):
         bus = await self.get_dbus_message_bus()
 

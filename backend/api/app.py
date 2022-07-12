@@ -47,6 +47,9 @@ class BackendEndpoint(WebSocketEndpoint):
     async def command_seek(self, seconds):
         await self.player.seek(seconds)
 
+    async def command_position(self, seconds):
+        await self.player.set_position(seconds)
+
     async def on_receive_unauthorized(self, websocket: WebSocket, text: str):
         if verify_password(text):
             self.authorized = True
