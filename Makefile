@@ -1,17 +1,19 @@
 COMPOSE:=docker compose
 PI_DIR=pi
 
-.PHONY: build frontend frontend-deploy up shell down
+.PHONY: build frontend up shell down
 
 build: CONTAINERS:=
 build:
 	$(COMPOSE) build --pull $(CONTAINERS)
 
 frontend:
-	cd frontend && npm run build
+	cd frontend \
+	&& if [ ! -d node_modules ]; then \
+		npm install ; \
+	fi \
+	&& npm run build
 
-frontend-deploy: frontend
-	. .env && cd frontend/dist && rsync -aP --delete ./ "$$DEPLOY_SSH_TARGET"
 
 up: CONTAINERS:=
 up:

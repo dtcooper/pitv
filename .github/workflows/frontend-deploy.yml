@@ -31,9 +31,7 @@ jobs:
       -
         name: Build site
         run: |
-          cd frontend
-          npm install
-          npm run build
+          make frontend
       -
         name: Clear current build
         uses: appleboy/ssh-action@master
