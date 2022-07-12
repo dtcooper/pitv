@@ -1,4 +1,4 @@
-name: Docker build
+name: Frontend deploy
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 concurrency:
-  group: docker-build
+  group: frontend-deploy
   cancel-in-progress: true
 
 jobs:
@@ -18,8 +18,9 @@ jobs:
         name: Checkout
         uses: actions/checkout@v3
       -
-        name: Build container
-        uses: ./.github/actions/docker-build-push
+        uses: actions/setup-node@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          container: backend
+          node-version: 16
+      -
+        name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
