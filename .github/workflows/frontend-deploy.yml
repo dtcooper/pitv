@@ -49,7 +49,7 @@ jobs:
           envs: DIRECTORY
           script: |
             cd "$DIRECTORY"
-            rm -vrf {*,.*}
+            rm -vrf {*,.*} || true
       -
         name: Upload new build
         uses: appleboy/scp-action@master
