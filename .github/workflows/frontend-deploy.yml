@@ -34,6 +34,19 @@ jobs:
           cd frontend
           npm install
           npm run build
+          cd dist
       -
-        name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+        name: Remove current build
+        uses: appleboy/ssh-action@master
+        env:
+          DIRECTORY: ${{ secrets.DEPLOY_DIRECTORY }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PASSWORD }}
+          fingerprint: ${{ secrets.SSH_FINGERPRINT }}
+          envs: DIRECTORY
+          script: |
+            cd "$DIRECTORY"
+            ls
