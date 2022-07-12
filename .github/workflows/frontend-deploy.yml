@@ -17,24 +17,24 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v3
-      -
-        name: Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      -
-        name: Create envfile
-        uses: SpicyPizza/create-envfile@v1.3
-        with:
-          envkey_DOMAIN_NAME: ${{ secrets.DEPLOY_DOMAIN_NAME }}
-          envkey_TITLE: ${{ secrets.DEPLOY_TITLE }}
-      -
-        name: Build site
-        run: |
-          cd frontend
-          npm install
-          npm run build
-          cd dist
+      # -
+      #   name: Setup node
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 16
+      # -
+      #   name: Create envfile
+      #   uses: SpicyPizza/create-envfile@v1.3
+      #   with:
+      #     envkey_DOMAIN_NAME: ${{ secrets.DEPLOY_DOMAIN_NAME }}
+      #     envkey_TITLE: ${{ secrets.DEPLOY_TITLE }}
+      # -
+      #   name: Build site
+      #   run: |
+      #     cd frontend
+      #     npm install
+      #     npm run build
+      #     cd dist
       -
         name: Remove current build
         uses: appleboy/ssh-action@master
@@ -44,7 +44,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_KEY }}
           fingerprint: ${{ secrets.SSH_FINGERPRINT }}
           envs: DIRECTORY
           script: |
