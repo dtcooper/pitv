@@ -34,7 +34,6 @@ jobs:
           cd frontend
           npm install
           npm run build
-          cd dist
       -
         name: Clear current build
         uses: appleboy/ssh-action@master
@@ -59,5 +58,5 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           fingerprint: ${{ secrets.SSH_FINGERPRINT }}
-          source: "*"
+          source: "frontend/dist/*"
           target: ${{ secrets.DEPLOY_DIRECTORY }}
