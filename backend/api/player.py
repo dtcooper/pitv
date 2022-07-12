@@ -40,7 +40,7 @@ class Player:
         self.stop_playing_event = asyncio.Event()
         self.next_video_request = None
         self._state = {
-            # js style keys
+            # JS object style keys
             "videos": sorted(v.name for v in self.videos),
             "currentlyPlaying": None,
             "download": None,
