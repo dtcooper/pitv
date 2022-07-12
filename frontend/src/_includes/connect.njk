@@ -1,0 +1,61 @@
+<!-- test -->
+<div
+  class="h-full w-full absolute bg-base-100 pointer-none flex items-center justify-center"
+  x-show="!$store.conn.enterPassword"
+>
+  <div
+    class="alert w-auto shadow-xl"
+    :class="$store.conn.interstitialAlertClass"
+  >
+    <div class="animate-pulse flex">
+      <span class="iconify h-8 w-8 md:h-12 md:w-12 md:mr-1.5" data-icon="mdi:lan-connect"></span>
+      <span class="text-xl md:text-3xl italic font-bold" x-text="`${$store.conn.interstitialDescription}...`">
+          Connecting...
+      </span>
+    </div>
+  </div>
+</div>
+
+<div class="modal" :class="{'modal-open': $store.conn.enterPassword}" x-cloak>
+  <form
+    class="modal-box bg-base-100"
+    x-title="password-form"
+    x-data='{showPassword: false}'
+    @submit.prevent="
+      document.getElementById('password-input').blur()
+      $store.conn.login()
+    "
+  >
+    <h3 class="font-bold text-xl">Enter the TV Password</h3>
+    <div class="py-4 form-control">
+      <input
+        id="password-input"
+        class="input input-lg input-bordered input-secondary tracking-wider"
+        :class="{
+          'input-secondary': !$store.conn.badPassword,
+          'input-error': $store.conn.badPassword
+        }"
+        type="password"
+        :type="showPassword ? 'text' : 'password'"
+        @input="$store.conn.badPassword = false"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="none"
+        x-model="$store.conn.password"
+        placeholder="Password..."
+        autofocus
+      >
+    </div>
+    <div class="form-control items-end">
+      <label class="label cursor-pointer space-x-4">
+        <span class="label-text" x-text="showPassword ? 'Hide' : 'Reveal'">Reveal</span>
+        <input type="checkbox" class="checkbox checkbox-secondary" x-model="showPassword">
+      </label>
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-secondary md:btn-lg" type="submit">
+        Login
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,20 +1,29 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=devnice-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>{{ TITLE or "Raspberry Pi Video Player" }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap" rel="stylesheet">
   <link href="{{ static("styles.css") }}" rel="stylesheet">
   <script src="{{ static("script.js") }}" defer></script>
+  <script>
+    const DATA = {
+      DEBUG: {{ DEBUG|scriptjson }},
+      DOMAIN_NAME: {{ DOMAIN_NAME|scriptjson }},
+      WEBSOCKET_URL_DEV_OVERRIDE: {{ WEBSOCKET_URL_DEV_OVERRIDE|default(null)|scriptjson }}
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/iconify/{{ ICONIFY_VERSION }}/iconify.min.js"></script>
 </head>
-<body class="min-h-screen">
-  <div
-    class="flex flex-col items-center justify-center mx-auto min-h-screen space-y-10"
-  x-data="{text: $persist('hi mom!') }">
-    <h1 class="text-3xl font-bold underline">
-      {{ TITLE or "Raspberry Pi Video Player" }}: {{ DOMAIN_NAME }}
-    </h1>
-    <h2 class="text-xl" x-text="text"></h2>
-  </div>
+<body>
+  <main x-data x-title="connect" x-show="!$store.conn.connected">
+    {% include "connect.njk" %}
+  </main>
+  <main x-data x-title="app" x-show="$store.conn.connected" x-cloak>
+    {% include "app.njk" %}
+  </main>
 </body>
 </html>

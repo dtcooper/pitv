@@ -1,0 +1,25 @@
+<div class="grid grid-rows-[auto_1fr]">
+  <div class="py-10 mx-auto text-5xl">It worked!</div>
+  <table class="table table-compact text-sm mx-auto" x-data>
+    <tr>
+      <th>key</th>
+      <th>value</th>
+    </tr>
+    {% for key in ['videos', 'currentlyPlaying', 'download', 'position', 'duration', 'playing'] %}
+      <tr>
+        <td class="text-left">{{ key }}:</td>
+        {% if key === 'videos' %}
+          <td>
+            <ol class="list-inside list-decimal">
+              <template x-for="video in $store.player.videos">
+                <li x-text="video"></li>
+              </template>
+            </ol>
+          </td>
+        {% else %}
+          <td x-text="$store.player.{{ key }}"></td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+  </table>
+</div>

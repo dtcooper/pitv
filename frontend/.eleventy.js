@@ -1,4 +1,5 @@
 const process = require('process')
+const nunjucks = require('nunjucks')
 
 module.exports = (eleventyConfig) => {
   eleventyConfig.setBrowserSyncConfig({
@@ -19,6 +20,13 @@ module.exports = (eleventyConfig) => {
     } else {
       return url
     }
+  })
+  eleventyConfig.addNunjucksFilter('scriptjson', function (value, spaces) {
+    if (value instanceof nunjucks.runtime.SafeString) {
+      value = value.toString()
+    }
+    const jsonString = JSON.stringify(value, null, spaces).replace(/</g, '\\u003c')
+    return nunjucks.runtime.markSafe(jsonString)
   })
 
   return {

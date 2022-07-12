@@ -52,7 +52,8 @@ class BackendEndpoint(WebSocketEndpoint):
             self.authorized = True
             self.encoding = "json"
             await websocket.send_text(self.PASSWORD_ACCEPTED)
-            await websocket.send_json(self.player.get_state())
+            initial_state = {'initialized': True, **self.player.get_state()}
+            await websocket.send_json(initial_state)
             self.authorized_websockets.add(websocket)
         else:
             await asyncio.sleep(random.uniform(0.25, 1.25))

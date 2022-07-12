@@ -40,8 +40,9 @@ class Player:
         self.stop_playing_event = asyncio.Event()
         self.next_video_request = None
         self._state = {
+            # js style keys
             "videos": sorted(v.name for v in self.videos),
-            "currently_playing": None,
+            "currentlyPlaying": None,
             "download": None,
             "position": None,
             "duration": None,
@@ -274,7 +275,7 @@ class Player:
                 )
                 proc_start_time = time.time()
                 logger.info(f"player started: {video_path.name}")
-                await self.set_state(currently_playing=video_path.name)
+                await self.set_state(currentlyPlaying=video_path.name)
 
                 wait_tasks = {
                     (proc_wait_task := asyncio.create_task(proc.wait())),
@@ -308,10 +309,10 @@ class Player:
                             await self.set_state(videos=sorted(v.name for v in self.videos))
 
                 logger.info("Player exited. Restarting")
-                await self.set_state(currently_playing=None)
+                await self.set_state(currentlyPlaying=None)
 
             else:
                 logger.warning("No videos to play.")
-                await self.set_state(currently_playing=None)
+                await self.set_state(currentlyPlaying=None)
 
             await asyncio.sleep(settings.PLAYER_BETWEEN_VIDEO_SLEEP)
