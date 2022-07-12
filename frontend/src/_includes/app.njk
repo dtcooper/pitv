@@ -1,25 +1,65 @@
-<div class="grid grid-rows-[auto_1fr]">
-  <div class="py-10 mx-auto text-5xl">It worked!</div>
-  <table class="table table-compact text-sm mx-auto" x-data>
-    <tr>
-      <th>key</th>
-      <th>value</th>
-    </tr>
-    {% for key in ['videos', 'currentlyPlaying', 'download', 'position', 'duration', 'playing'] %}
-      <tr>
-        <td class="text-left">{{ key }}:</td>
-        {% if key === 'videos' %}
-          <td>
-            <ol class="list-inside list-decimal">
-              <template x-for="video in $store.player.videos">
-                <li x-text="video"></li>
-              </template>
-            </ol>
-          </td>
-        {% else %}
-          <td x-text="$store.player.{{ key }}"></td>
+<div class="space-y-2 mt-1 px-1.5 max-w-screen-md mx-auto">
+  <div
+    class="text-center text-lg italic"
+    :class="{'animate-pulse': !$store.player.currentlyPlaying}"
+    x-text="$store.player.currentlyPlaying || 'Loading...'"
+  ></div>
+  <div
+    class="flex items-center text-xl space-x-3"
+    x-title="elapsed"
+    x-data="{duration: $persist(true).as('playerShowDuration')}"
+  >
+    {% for metric, name in [
+        ['$store.player.position || 0', 'position'],
+        ['$store.player.duration || 0', 'duration'],
+        ['($store.player.duration - $store.player.position) || 0', 'timeleft']
+      ]
+    %}
+      <div
+        class="flex{% if name !== 'position' %} cursor-pointer{% endif %}"
+        {% if name !== 'position' %}
+          x-show="{% if name === 'timeleft' %}!{% endif %}duration"
+          @click="duration = !duration"
         {% endif %}
-      </tr>
+      >
+        {% if name === 'timeleft' %}
+          <span>-</span>
+        {% endif %}
+        <span x-text="`${Math.floor(({{ metric }}) / 3600)}:`"></span>
+        <span x-text="`${Math.floor((({{ metric }}) % 3600) / 60)}:`.padStart(3, '0')"></span>
+        <span x-text="`${({{ metric }}) % 60}`.padStart(2, '0')"></span>
+      </div>
+      {% if name === 'position' %}
+        <progress class="progress grow h-5" x-show="!$store.player.playing"></progress>
+        <progress
+          class="progress grow h-5 cursor-pointer hover:saturate-150"
+          x-show="$store.player.playing" :value="$store.player.position" :max="$store.player.duration"
+          @click="(event) => $store.player.setPosition(event.offsetX / $el.clientWidth * $store.player.duration)"
+        ></progress>
+      {% endif %}
     {% endfor %}
-  </table>
+  </div>
+  <div class="btn-group flex justify-center">
+    <button class="btn btn-ghost btn-sm md:btn-md" :disabled="!$store.player.playing">
+      <span
+        class="iconify h-6 w-6 md:h-8 md:w-8"
+        :data-icon="$store.player.paused ? 'mdi:pause' : 'mdi:play'"
+      ></span>
+    </button>
+    <button class="btn btn-ghost btn-sm md:btn-md" :class="{'pointer-events-none': !$store.player.playing}" @click="$store.player.seek(-60)">
+      <span class="iconify h-6 w-6 md:h-8 md:w-8" data-icon="mdi:rewind-60"></span>
+    </button>
+     <button class="btn btn-ghost btn-sm md:btn-md" :class="{'pointer-events-none': !$store.player.playing}" @click="$store.player.seek(-15)">
+      <span class="iconify h-6 w-6 md:h-8 md:w-8" data-icon="mdi:rewind-15"></span>
+    </button>
+    <button class="btn btn-ghost btn-sm md:btn-md" :class="{'pointer-events-none': !$store.player.playing}" @click="$store.player.seek(15)">
+      <span class="iconify h-6 w-6 md:h-8 md:w-8" data-icon="mdi:fast-forward-15"></span>
+    </button>
+    <button class="btn btn-ghost btn-sm md:btn-md" :class="{'pointer-events-none': !$store.player.playing}" @click="$store.player.seek(60)">
+      <span class="iconify h-6 w-6 md:h-8 md:w-8" data-icon="mdi:fast-forward-60"></span>
+    </button>
+    <button class="btn btn-ghost btn-sm md:btn-md" @click="$store.player.playRandom()">
+      <span class="iconify h-6 w-6 md:h-8 md:w-8" data-icon="mdi:shuffle-variant"></span>
+    </button>
+  </div>
 </div>

@@ -13,5 +13,6 @@ module.exports = function () {
   } else {
     env.DEBUG = env.DEBUG !== '0' && !!env.DEBUG
   }
+  env.TITLE = env.TITLE || 'Raspberry Pi Video Player'
   return { ...env, ...extraContext }
 }
