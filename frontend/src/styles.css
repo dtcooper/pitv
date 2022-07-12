@@ -2,7 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+    /* https://github.com/postcss/postcss-100vh-fix */
+    .h-screen-iphone-fix {
+      height: 100vh;
+    }
 
-[x-cloak] {
-    display: none !important;
+    .h-min-screen-iphone-fix {
+      min-height: 100vh;
+    }
+
+    [x-cloak] {
+      display: none;
+    }
+
+    @supports (-webkit-touch-callout: none) {
+      .h-screen-iphone-fix {
+          height: -webkit-fill-available;
+      }
+
+      .h-min-screen-iphone-fix {
+          min-height: -webkit-fill-available;
+      }
+
+      .overflow-hidden-iphone-only {
+          overflow: hidden;
+      }
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
 }

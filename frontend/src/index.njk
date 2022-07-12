@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>{{ TITLE or "Raspberry Pi Video Player" }}</title>
+  <title>{{ TITLE }}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap" rel="stylesheet">
@@ -18,12 +18,19 @@
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/iconify/{{ ICONIFY_VERSION }}/iconify.min.js"></script>
 </head>
-<body>
-  <main x-data x-title="connect" x-show="!$store.conn.connected">
+<body class="h-screen-iphone-fix overflow-hidden-iphone-only">
+  <div x-data x-title="connect" x-show="!$store.conn.connected">
     {% include "connect.njk" %}
-  </main>
-  <main x-data x-title="app" x-show="$store.conn.connected" x-cloak>
+  </div>
+
+  <div
+    x-data
+    x-title="app"
+    class="flex flex-col h-screen-iphone-fix overflow-hidden-iphone-only max-w-screen-md mx-auto space-y-1 md:space-y-3"
+    x-show="$store.conn.connected"
+    x-cloak
+  >
     {% include "app.njk" %}
-  </main>
+  </div>
 </body>
 </html>

@@ -1,0 +1,28 @@
+<di class="flex flex-col flex-1">
+  <template x-for="(video, index) in $store.player.videos">
+    <div>
+      <div
+        x-data="{edit: false}"
+        class="p-1 cursor-pointer hover:bg-base-300"
+        :class="{
+          'bg-base-200': (index % 2) == 0 && $store.player.currentlyPlaying !== video.path,
+          '!bg-secondary': $store.player.currentlyPlaying === video.path
+        }"
+      >
+        <p class="flex items-center">
+          <span
+            class="grow italic bold"
+            x-text="`${index + 1}. ${video.title}`"
+            @click="if (!edit) { $store.player.play(video.path) }"
+          ></span>
+          {#
+          <button class="btn btn-ghost btn-square" @click="edit = true" x-show="!edit">
+            <span class="iconify h-6 w-6" data-icon="mdi:lead-pencil"></span>
+          </button>
+          #}
+        </p>
+        <p class="flex" x-show="video.description" x-text="video.description"></p>
+      </div>
+    </div>
+  </template>
+</div>
