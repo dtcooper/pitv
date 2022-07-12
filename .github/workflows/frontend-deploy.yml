@@ -60,3 +60,4 @@ jobs:
           fingerprint: ${{ secrets.SSH_FINGERPRINT }}
           source: "frontend/dist/*"
           target: ${{ secrets.DEPLOY_DIRECTORY }}
+          strip_components: 2
