@@ -1,4 +1,5 @@
 from collections.abc import MutableMapping
+from contextlib import contextmanager
 import datetime
 from functools import wraps
 import json
@@ -6,7 +7,6 @@ import logging
 import os
 from pathlib import Path
 import random
-from contextlib import contextmanager
 
 from watchfiles import awatch, Change as WatchFilesChange
 
@@ -151,6 +151,23 @@ class VideosStore(SingletonBaseClass, MutableMapping):
     def update(self, *args, **kwargs):
         with self.transaction():
             super().update(*args, **kwargs)
+
+    @convert_arg_to_filename
+    def update_video(self, filename, **kwargs):
+        updated = False
+        if (video := self.get(filename)) is not None:
+            for attr, value in kwargs.items():
+                if getattr(video, attr) != value:
+                    setattr(video, attr, value)
+                    logger.info(f"Set {attr}={value} for {filename}")
+                    updated = True
+
+            if updated:
+                self.save()
+
+        else:
+            logger.warning(f"No video {filename} to update")
+        return updated
 
     def __len__(self):
         return len(self._videos)

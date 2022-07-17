@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 from pathlib import Path
 import re
@@ -36,6 +37,7 @@ class Player(SingletonBaseClass):
         self._dbus_message_bus = None
         self.videos: VideosStore = self.app.state.videos
         self.websockets = app.state.authorized_websockets
+        self.currently_playing = None
         self.stop_playing_event = asyncio.Event()
         self.next_video_request = None
         self._state = {
@@ -160,7 +162,7 @@ class Player(SingletonBaseClass):
             for websocket in self.websockets:
                 try:
                     await websocket.send_json(message)
-                except RuntimeError:
+                except Exception:
                     logger.exception("Couldn't write to websocket")
 
     def get_state(self, key=None):
@@ -237,6 +239,12 @@ class Player(SingletonBaseClass):
 
             if error or not state["playing"]:
                 state = {"position": None, "duration": None, "playing": False}
+            else:
+                currently_playing = self.get_state("currentlyPlaying")
+                duration_delta = datetime.timedelta(seconds=state["duration"])
+
+                if self.videos.update_video(currently_playing, duration=duration_delta):
+                    await self.set_state(videos=self.videos.as_json())
 
             await self.set_state(**state)
             await asyncio.sleep(self.PUSH_PROGRESS_SLEEP_TIME)
