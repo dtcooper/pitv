@@ -2,12 +2,12 @@ FROM --platform=linux/arm64 python:3.10
 
 ARG OMXPLAYER_DEB_URL="http://archive.raspberrypi.org/debian/pool/main/o/omxplayer/omxplayer_20190723+gitf543a0d-1+bullseye_armhf.deb" \
     FIRMWARE_VC_LIBS_VERSION="ae17aabd" \
-    FIRMWARE_VC_LIBS="libbcm_host.so libbrcmEGL.so libbrcmGLESv2.so libopenmaxil.so libvchiq_arm.so libvcos.so"
+    FIRMWARE_VC_LIBS="libbcm_host.so libbrcmEGL.so libbrcmGLESv2.so libopenmaxil.so libvchiq_arm.so libvcos.so" \
+    POETRY_VERSION=1.1.14
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    POETRY_VIRTUALENVS_CREATE=false \
-    POETRY_VERSION=1.1.13
+    POETRY_VIRTUALENVS_CREATE=false
 
 RUN mkdir -p /tmp/firmware /opt/vc/lib \
     && wget -qO - "https://github.com/raspberrypi/firmware/tarball/${FIRMWARE_VC_LIBS_VERSION}" \

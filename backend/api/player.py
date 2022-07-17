@@ -1,7 +1,7 @@
 import asyncio
+import datetime
 import logging
 from pathlib import Path
-import random
 import re
 import shutil
 import subprocess
@@ -9,18 +9,17 @@ import time
 
 from dbus_next import Message as DBusMessage, MessageType as DBusMessageType
 from dbus_next.aio import MessageBus as DBusMessageBus
-from starlette.applications import Starlette
-from watchfiles import awatch, Change as WatchChange
 
 from . import settings
-from .util import auto_restart_coroutine
+from .util import SingletonBaseClass
+from .videos import VideosStore
 
 
 logger = logging.getLogger(__name__)
 
 
-class Player:
-    DBUS_BUS_ADDRESS_FILE = Path("/tmp/omxplayerdbus.root")
+class Player(SingletonBaseClass):
+    DBUS_BUS_ADDRESS_PATH = Path("/tmp/omxplayerdbus.root")
     DBUS_PROC_NAME = "dbus-daemon"
     DBUS_LOADING_SLEEP_TIME = 0.5
     DOWNLOAD_RE = re.compile(r"^\[download\]\s*([0-9\.]+)")
@@ -28,20 +27,22 @@ class Player:
     PLAYER_PROC_NAMES = ["omxplayer", "omxplayer.bin"]
     PUSH_PROGRESS_SLEEP_TIME = 0.25
     KILL_SLEEP_TIME = 0.2
-    TASKS = ["watch_for_videos", "run_player", "push_progress"]
+    TASKS = ("run_player", "push_progress")
     VIDEOS_DIR = settings.VIDEOS_DIR
     YT_DLP_PATH = shutil.which("yt-dlp")
 
-    def __init__(self, app: Starlette):
+    def __init__(self, app):
+        super().__init__(app)
+
         self._dbus_message_bus = None
-        self.videos = set(p for p in self.VIDEOS_DIR.iterdir() if p.is_file())
-        self.app = app
+        self.videos: VideosStore = self.app.state.videos
         self.websockets = app.state.authorized_websockets
+        self.currently_playing = None
         self.stop_playing_event = asyncio.Event()
         self.next_video_request = None
         self._state = {
             # JS object style keys
-            "videos": sorted(v.name for v in self.videos),
+            "videos": self.videos.as_json(),
             "currentlyPlaying": None,
             "download": None,
             "position": None,
@@ -70,11 +71,6 @@ class Player:
             stderr=subprocess.DEVNULL,
         )
 
-    def _app_running(self):
-        if self.app.state.shutting_down:
-            raise asyncio.CancelledError()
-        return True
-
     async def kill(self):
         logger.info("Killing omxplayer with SIGINT + SIGKILL")
         await self._kill("SIGINT")
@@ -89,33 +85,20 @@ class Player:
 
     async def startup(self):
         await self.kill()
-        for task_name in self.TASKS:
-            task = getattr(self, task_name)
-            asyncio.create_task(auto_restart_coroutine(task))
-
-    async def watch_for_videos(self):
-        logger.info(f"Saw {len(self.videos)} videos")
-        async for changes in awatch(self.VIDEOS_DIR, watch_filter=lambda change, path: change != WatchChange.modified):
-            for change, filename in changes:
-                path = Path(filename)
-                if change == WatchChange.added and path.is_file():
-                    logger.info(f"Added video: {path.name}")
-                    self.videos.add(path)
-                elif change == WatchChange.deleted and path in self.videos:
-                    logger.info(f"Removed video: {path.name}")
-                    self.videos.remove(path)
-            await self.set_state(videos=sorted(v.name for v in self.videos))
+        await super().startup()
 
     def request_video(self, filename):
-        path = self.VIDEOS_DIR / filename
-        if path in self.videos:
-            logger.info(f"Requesting video: {path.name}")
-            self.next_video_request = path
+        video = self.videos.get(filename)
+        if video is not None:
+            logger.info(f"Requesting video: {video.filename}")
+            self.next_video_request = video
             self.stop_playing_event.set()
         else:
             logger.info(f"Invalid video request: {filename}")
 
     async def request_url(self, url):
+        raise Exception("Broken!")
+
         if self.get_state("download") is not None:
             logger.warning("Refusing to download as one is already in progress")
             return
@@ -165,18 +148,6 @@ class Player:
         logger.info("Requesting random video")
         self.stop_playing_event.set()
 
-    def get_next_video_path(self):
-        next_video = None
-
-        if self.next_video_request:
-            next_video = self.next_video_request
-            self.next_video_request = None
-
-        elif self.videos:
-            next_video = random.choice(list(self.videos))
-
-        return next_video
-
     async def set_state(self, **kwargs):
         message = {}
         for key, value in kwargs.items():
@@ -191,7 +162,7 @@ class Player:
             for websocket in self.websockets:
                 try:
                     await websocket.send_json(message)
-                except RuntimeError:
+                except Exception:
                     logger.exception("Couldn't write to websocket")
 
     def get_state(self, key=None):
@@ -200,11 +171,11 @@ class Player:
     async def get_dbus_message_bus(self):
         if self._dbus_message_bus is None:
             while self._dbus_message_bus is None:
-                while not self.DBUS_BUS_ADDRESS_FILE.exists():
+                while not self.DBUS_BUS_ADDRESS_PATH.exists():
                     logger.info("waiting for dbus address file")
                     await asyncio.sleep(self.DBUS_LOADING_SLEEP_TIME)
 
-                with open(self.DBUS_BUS_ADDRESS_FILE, "r") as file:
+                with open(self.DBUS_BUS_ADDRESS_PATH, "r") as file:
                     bus_address = file.read().strip()
 
                 try:
@@ -239,7 +210,6 @@ class Player:
             signature="ox",
             body=["/not/used", round(seconds * 1000000)],
         )
-        print(message.body)
         await bus.call(message)
 
     async def push_progress(self):
@@ -269,26 +239,36 @@ class Player:
 
             if error or not state["playing"]:
                 state = {"position": None, "duration": None, "playing": False}
+            else:
+                currently_playing = self.get_state("currentlyPlaying")
+                duration_delta = datetime.timedelta(seconds=state["duration"])
+
+                if self.videos.update_video(currently_playing, duration=duration_delta):
+                    await self.set_state(videos=self.videos.as_json())
 
             await self.set_state(**state)
             await asyncio.sleep(self.PUSH_PROGRESS_SLEEP_TIME)
 
     async def run_player(self):
         while self._app_running():
-            video_path = self.get_next_video_path()
+            if self.next_video_request is None:
+                video = self.videos.random()
+            else:
+                video = self.next_video_request
+                self.next_video_request = None
 
-            if video_path is not None:
+            if video is not None:
                 proc = await asyncio.create_subprocess_exec(
                     self.PLAYER_PATH,
                     "-s",
                     "--aspect-mode",
                     "stretch",
-                    video_path,
+                    video.path,
                     stdout=subprocess.DEVNULL,
                 )
                 proc_start_time = time.time()
-                logger.info(f"player started: {video_path.name}")
-                await self.set_state(currentlyPlaying=video_path.name)
+                logger.info(f"player started: {video.filename}")
+                await self.set_state(currentlyPlaying=video.filename)
 
                 wait_tasks = {
                     (proc_wait_task := asyncio.create_task(proc.wait())),
@@ -314,12 +294,12 @@ class Player:
                     if proc_end_time - proc_start_time <= settings.PLAYER_ERROR_TIMEOUT:
                         logger.error(
                             f"Player exited in under {settings.PLAYER_ERROR_TIMEOUT:.2f}s with code"
-                            f" {proc.returncode} for: {video_path.name}."
+                            f" {proc.returncode} for: {video.filename}."
                         )
-                        if video_path in self.videos:
-                            logger.warning(f"Removing unplayable {video_path.name} from videos list")
-                            self.videos.remove(video_path)
-                            await self.set_state(videos=sorted(v.name for v in self.videos))
+                        logger.warning(f"Removing unplayable {video.filename} from videos list")
+                        if video in self.videos:
+                            del self.videos[video]
+                            await self.set_state(videos=self.videos.as_json())
 
                 logger.info("Player exited. Restarting")
                 await self.set_state(currentlyPlaying=None)

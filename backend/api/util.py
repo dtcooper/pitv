@@ -19,6 +19,23 @@ AUTO_RESTART_AVERAGE_COROUTINE_FAIL_TIME_BEFORE_EXIT = 15
 logger = logging.getLogger(__name__)
 
 
+class SingletonBaseClass:
+    TASKS = ()
+
+    def __init__(self, app):
+        self.app = app
+
+    async def startup(self):
+        for task_name in self.TASKS:
+            task = getattr(self, task_name)
+            asyncio.create_task(auto_restart_coroutine(task))
+
+    def _app_running(self):
+        if self.app.state.shutting_down:
+            raise asyncio.CancelledError()
+        return True
+
+
 async def auto_restart_coroutine(coro: typing.Coroutine, *args, **kwargs):
     @wraps(coro)
     async def auto_restart_coro():

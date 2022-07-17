@@ -13,6 +13,7 @@ from starlette.websockets import WebSocket
 from . import settings
 from .player import Player
 from .util import init_pkg_logger, verify_password
+from .videos import VideosStore
 
 
 logger = logging.getLogger(__name__)
@@ -88,9 +89,11 @@ async def startup():
 
     app.state.shutting_down = False
     app.state.authorized_websockets = weakref.WeakSet()
-    app.state.player = Player(app)
+    videos = app.state.videos = VideosStore(app)
+    player = app.state.player = Player(app)
 
-    await app.state.player.startup()
+    await videos.startup()
+    await player.startup()
 
 
 def shutdown():
