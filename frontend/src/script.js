@@ -9,14 +9,6 @@ import ReconnectingWebSocket from 'reconnecting-websocket'
 Alpine.plugin(persist)
 window.Alpine = Alpine
 
-function formatDuration (s) {
-  let d = ''
-  if (s > 3600) {
-    d += `${s % (3600)}h`
-  }
-  return d
-}
-
 document.addEventListener('alpine:init', () => {
   let socket
 
@@ -34,7 +26,7 @@ document.addEventListener('alpine:init', () => {
     duration: null,
     playing: null,
 
-    init() {
+    init () {
       Alpine.effect(() => {
         if (this.currentlyPlaying === null) {
           this.currentlyPlayingPretty = 'Loading...'
@@ -51,8 +43,26 @@ document.addEventListener('alpine:init', () => {
       })
     },
 
+    formatDuration (s, forceHour = false) {
+      let d = ''
+      if (s > 3600 || forceHour) {
+        d = `${Math.floor(s / 3600)}:`
+      }
+      d += `${Math.floor((s % 3600) / 60)}:`.padStart(3, '0')
+      d += `${s % 60}`.padStart(2, '0')
+      return d
+    },
+
     prettyDuration () {
-      return formatDuration(this.duration)
+      return this.formatDuration(this.duration)
+    },
+
+    prettyPosition () {
+      return this.formatDuration(this.position, this.duration > 3600)
+    },
+
+    prettyTimeleft () {
+      return this.formatDuration(this.duration - this.position, this.duration > 3600)
     },
 
     setPosition (seconds) {
@@ -69,6 +79,11 @@ document.addEventListener('alpine:init', () => {
 
     play (path) {
       sendJson({ play: path })
+    },
+
+    update (path, data) {
+      data.filename = path
+      sendJson({ update: data })
     }
   })
 
@@ -118,7 +133,10 @@ document.addEventListener('alpine:init', () => {
         let message = event.data
         if (this.authorized) {
           message = JSON.parse(message)
-          Object.assign(this.player, message)
+          for (const key in message) {
+            this.player[key] = message[key]
+          }
+          console.log(message)
           this.connected = true
         } else {
           if (message === 'PASSWORD_ACCEPTED') {

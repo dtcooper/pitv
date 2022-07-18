@@ -5,14 +5,14 @@ module.exports = {
   ],
   theme: {
     screens: {
-      'md': '800px'
+      md: '800px'
     },
     extend: {}
   },
   daisyui: {
     themes: [{
       jewpizza: {
-        fontFamily: "Space Mono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+        fontFamily: 'Space Mono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace',
         primary: '#fc49ab',
         secondary: '#5fe8ff',
         accent: '#c07eec',
@@ -23,10 +23,10 @@ module.exports = {
         success: '#36D399',
         warning: '#FBBD23',
         error: '#F87272',
-        "--rounded-box": "0",
-        "--rounded-btn": "0",
-        "--rounded-badge": "0",
-        "--tab-radius": "0",
+        '--rounded-box': '0',
+        '--rounded-btn': '0',
+        '--rounded-badge': '0',
+        '--tab-radius': '0'
       }
     }]
   },

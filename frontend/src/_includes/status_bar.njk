@@ -9,37 +9,28 @@
   x-title="elapsed"
   x-data="{duration: $persist(true).as('playerShowDuration')}"
 >
-  {%
-    for metric, name in [
-      ['$store.player.position || 0', 'position'],
-      ['$store.player.duration || 0', 'duration'],
-      ['($store.player.duration - $store.player.position) || 0', 'timeleft']
-    ]
-  %}
-      <div
-        class="flex{% if name !== 'position' %} cursor-pointer hover:text-primary{% endif %}"
-        {% if name !== 'position' %}
-          x-show="{% if name === 'timeleft' %}!{% endif %}duration"
-          @click="duration = !duration"
-        {% endif %}
-      >
-        {% if name === 'timeleft' %}
-          <span>-</span>
-        {% endif %}
-        <span x-text="`${Math.floor(({{ metric }}) / 3600)}:`"></span>
-        <span x-text="`${Math.floor((({{ metric }}) % 3600) / 60)}:`.padStart(3, '0')"></span>
-        <span x-text="`${({{ metric }}) % 60}`.padStart(2, '0')"></span>
-      </div>
-
-      {% if name === 'position' %}
-        <progress class="progress grow h-2 md:h-5" x-show="!$store.player.playing"></progress>
-        <progress
-          class="progress grow h-2 md:h-5 cursor-pointer hover:progress-primary"
-          x-show="$store.player.playing" :value="$store.player.position" :max="$store.player.duration"
-          @click="(event) => $store.player.setPosition(event.offsetX / $el.clientWidth * $store.player.duration)"
-        ></progress>
+  {% for name in ['position', 'duration', 'timeleft'] %}
+    <div
+      class="flex{% if name !== 'position' %} cursor-pointer hover:text-primary{% endif %}"
+      {% if name !== 'position' %}
+        x-show="{% if name === 'timeleft' %}!{% endif %}duration"
+        @click="duration = !duration"
       {% endif %}
+    >
+      {% if name === 'timeleft' %}
+        <span>-</span>
+      {% endif %}
+      <span x-text="$store.player.pretty{{ name|title }}()"></span>
+    </div>
 
+    {% if name === 'position' %}
+      <progress class="progress grow h-2 md:h-5" x-show="!$store.player.playing"></progress>
+      <progress
+        class="progress grow h-2 md:h-5 cursor-pointer hover:progress-primary"
+        x-show="$store.player.playing" :value="$store.player.position" :max="$store.player.duration"
+        @click="(event) => $store.player.setPosition(event.offsetX / $el.clientWidth * $store.player.duration)"
+      ></progress>
+    {% endif %}
   {% endfor %}
 </div>
 
@@ -51,14 +42,17 @@
     ></span>
   </button>
   {%
-    for icon, seek in [
-      ['mdi:rewind-60', -60],
-      ['mdi:rewind-15', -15],
-      ['mdi:fast-forward-15', 15],
-      ['mdi:fast-forward-60', 60]
+    for command, icon, seek in [
+      ['setPosition', 'mdi:rewind', 0],
+      ['seek', 'mdi:rewind-15', -15],
+      ['seek', 'mdi:fast-forward-15', 15]
     ]
   %}
-    <button class="btn btn-ghost" :class="{'pointer-events-none': !$store.player.playing}" @click="$store.player.seek({{ seek }})">
+    <button
+      class="btn btn-ghost"
+      :class="{'pointer-events-none': !$store.player.playing}"
+      @click="$store.player.{{ command }}({{ seek }})"
+    >
       <span class="iconify h-6 w-6 md:h-8 md:w-8" data-icon="{{ icon }}"></span>
     </button>
   {% endfor %}
