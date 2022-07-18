@@ -35,6 +35,7 @@ class BackendEndpoint(WebSocketEndpoint):
         app: Starlette = self.scope["app"]
         self.authorized_websockets: weakref.WeakSet = app.state.authorized_websockets
         self.player: Player = app.state.player
+        self.videos: VideosStore = app.state.videos
 
     def command_play(self, video_request):
         self.player.request_video(video_request)
@@ -44,6 +45,10 @@ class BackendEndpoint(WebSocketEndpoint):
 
     def command_download(self, url):
         asyncio.create_task(self.player.request_url(url))
+
+    def command_update(self, kwargs):
+        filename = kwargs.pop('filename')
+        self.videos.update_video(filename, **kwargs)
 
     async def command_seek(self, seconds):
         await self.player.seek(seconds)

@@ -261,10 +261,11 @@ class Player(SingletonBaseClass):
                 proc = await asyncio.create_subprocess_exec(
                     self.PLAYER_PATH,
                     "-s",
+                    "--no-osd",
                     "--aspect-mode",
                     "stretch",
                     video.path,
-                    stdout=subprocess.DEVNULL,
+                    # stdout=subprocess.DEVNULL,
                 )
                 proc_start_time = time.time()
                 logger.info(f"player started: {video.filename}")

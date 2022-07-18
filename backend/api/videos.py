@@ -30,6 +30,8 @@ def convert_arg_to_filename(func):
 
 
 class Video:
+    EDITABLE_ATTRS = ('title', 'description', 'is_r_rated')
+
     def __init__(self, path, title=None, duration=0, description=None, is_r_rated=False):
         if isinstance(path, str):
             path = settings.VIDEOS_DIR / path
@@ -157,7 +159,7 @@ class VideosStore(SingletonBaseClass, MutableMapping):
         updated = False
         if (video := self.get(filename)) is not None:
             for attr, value in kwargs.items():
-                if getattr(video, attr) != value:
+                if attr in Video.EDITABLE_ATTRS and getattr(video, attr) != value:
                     setattr(video, attr, value)
                     logger.info(f"Set {attr}={value} for {filename}")
                     updated = True
