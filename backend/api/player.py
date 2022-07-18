@@ -241,10 +241,8 @@ class Player(SingletonBaseClass):
                 state = {"position": None, "duration": None, "playing": False}
             else:
                 currently_playing = self.get_state("currentlyPlaying")
-                duration_delta = datetime.timedelta(seconds=state["duration"])
-
-                if self.videos.update_video(currently_playing, duration=duration_delta):
-                    await self.set_state(videos=self.videos.as_json())
+                duration = datetime.timedelta(seconds=state["duration"])
+                await self.videos.update_video(currently_playing, duration=duration)
 
             await self.set_state(**state)
             await asyncio.sleep(self.PUSH_PROGRESS_SLEEP_TIME)

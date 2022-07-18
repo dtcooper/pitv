@@ -30,8 +30,6 @@ def convert_arg_to_filename(func):
 
 
 class Video:
-    EDITABLE_ATTRS = ('title', 'description', 'is_r_rated')
-
     def __init__(self, path, title=None, duration=0, description=None, is_r_rated=False):
         if isinstance(path, str):
             path = settings.VIDEOS_DIR / path
@@ -68,6 +66,7 @@ class VideosStore(SingletonBaseClass, MutableMapping):
     JSON_DB_PATH = settings.VIDEOS_DIR / ".videos.json"
     JSON_DB_PATH_TMP = JSON_DB_PATH.parent / f"{JSON_DB_PATH.stem}.tmp.json"
     DATA_FILENAMES = {JSON_DB_PATH.name, JSON_DB_PATH_TMP.name}
+    EDITABLE_ATTRS = ("title", "description", "is_r_rated")
 
     def __init__(self, app):
         super().__init__(app)
@@ -142,10 +141,11 @@ class VideosStore(SingletonBaseClass, MutableMapping):
             self.save()
 
     def __iter__(self):
-        return iter(sorted(self._videos.keys()))
+        return (key for key, _ in self.items())
 
     def items(self):
-        return ((filename, video) for filename, video in sorted(self._videos.items()))
+        sorted_items = sorted(self._videos.items(), key=lambda kv: (kv[1].title.lower(), kv[0]))
+        return ((filename, video) for filename, video in sorted_items)
 
     def values(self):
         return (value for _, value in self.items())
@@ -155,21 +155,21 @@ class VideosStore(SingletonBaseClass, MutableMapping):
             super().update(*args, **kwargs)
 
     @convert_arg_to_filename
-    def update_video(self, filename, **kwargs):
+    async def update_video(self, filename, **kwargs):
         updated = False
         if (video := self.get(filename)) is not None:
             for attr, value in kwargs.items():
-                if attr in Video.EDITABLE_ATTRS and getattr(video, attr) != value:
+                if getattr(video, attr) != value:
                     setattr(video, attr, value)
                     logger.info(f"Set {attr}={value} for {filename}")
                     updated = True
 
             if updated:
                 self.save()
+                await self.app.state.player.set_state(videos=self.as_json())
 
         else:
             logger.warning(f"No video {filename} to update")
-        return updated
 
     def __len__(self):
         return len(self._videos)

@@ -46,9 +46,12 @@ class BackendEndpoint(WebSocketEndpoint):
     def command_download(self, url):
         asyncio.create_task(self.player.request_url(url))
 
-    def command_update(self, kwargs):
-        filename = kwargs.pop('filename')
-        self.videos.update_video(filename, **kwargs)
+    async def command_update(self, kwargs):
+        filename = kwargs.pop("filename")
+        for key in kwargs.keys():
+            if key not in VideosStore.EDITABLE_ATTRS:
+                return
+        await self.videos.update_video(filename, **kwargs)
 
     async def command_seek(self, seconds):
         await self.player.seek(seconds)

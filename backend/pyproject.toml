@@ -10,7 +10,7 @@ python = "^3.10"
 starlette = "^0.20.4"
 uvicorn = {extras = ["standard"], version = "^0.18.2"}
 watchfiles = "^0.15.0"
-yt-dlp = "^2022.6.29"
+yt-dlp = "^2022.7.18"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.9"
