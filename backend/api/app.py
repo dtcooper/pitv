@@ -6,8 +6,7 @@ import weakref
 from starlette.applications import Starlette
 from starlette.endpoints import WebSocketEndpoint
 from starlette.responses import RedirectResponse
-from starlette.routing import Mount, Route, WebSocketRoute
-from starlette.staticfiles import StaticFiles
+from starlette.routing import Route, WebSocketRoute
 from starlette.websockets import WebSocket
 
 from . import settings
@@ -48,6 +47,9 @@ class BackendEndpoint(WebSocketEndpoint):
 
     async def command_toggle_play_r_rated(self, _):
         await self.videos.toggle_play_r_rated()
+
+    async def command_play_pause(self, _):
+        await self.player.play_pause()
 
     async def command_update(self, kwargs):
         filename = kwargs.pop("filename")
@@ -114,7 +116,6 @@ def shutdown():
 
 
 routes = [
-    Mount("/test", app=StaticFiles(directory=settings.PROJECT_ROOT / "static", html=True)),
     WebSocketRoute("/backend", endpoint=BackendEndpoint),
     Route("/{rest:path}", endpoint=index),
 ]

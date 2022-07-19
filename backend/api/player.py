@@ -48,6 +48,7 @@ class Player(SingletonBaseClass):
             "duration": None,
             "playing": False,
             "play_r_rated": self.videos.play_r_rated,
+            "paused": False,
         }
 
     async def _kill(self, signal: int):
@@ -198,57 +199,51 @@ class Player(SingletonBaseClass):
 
         return self._dbus_message_bus
 
-    async def seek(self, seconds):
+    async def _dbus_helper(self, member, signature="", body=None):
         bus = await self.get_dbus_message_bus()
-        message = DBusMessage(
-            destination="org.mpris.MediaPlayer2.omxplayer",
-            path="/org/mpris/MediaPlayer2",
-            interface="org.mpris.MediaPlayer2.Player",
-            member="Seek",
-            signature="x",
-            body=[round(seconds * 1000000)],
+        return await bus.call(
+            DBusMessage(
+                destination="org.mpris.MediaPlayer2.omxplayer",
+                path="/org/mpris/MediaPlayer2",
+                interface="org.freedesktop.DBus.Properties" if member == "Get" else "org.mpris.MediaPlayer2.Player",
+                member=member,
+                signature=signature,
+                body=body or [],
+            )
         )
-        await bus.call(message)
+
+    async def seek(self, seconds):
+        await self._dbus_helper("Seek", "x", [round(seconds * 1000000)])
 
     async def set_position(self, seconds):
-        bus = await self.get_dbus_message_bus()
-        message = DBusMessage(
-            destination="org.mpris.MediaPlayer2.omxplayer",
-            path="/org/mpris/MediaPlayer2",
-            interface="org.mpris.MediaPlayer2.Player",
-            member="SetPosition",
-            signature="ox",
-            body=["/not/used", round(seconds * 1000000)],
-        )
-        await bus.call(message)
+        await self._dbus_helper("SetPosition", "ox", ["/not/used", round(seconds * 1000000)])
+
+    async def play_pause(self):
+        await self._dbus_helper("PlayPause")
 
     async def push_progress(self):
-        bus = await self.get_dbus_message_bus()
-
         while self._app_running():
             state = {}
             error = False
 
             for member in ("Position", "Duration", "PlaybackStatus"):
-                message = DBusMessage(
-                    destination="org.mpris.MediaPlayer2.omxplayer",
-                    path="/org/mpris/MediaPlayer2",
-                    interface="org.freedesktop.DBus.Properties",
-                    member="Get",
-                    signature="ss",
-                    body=["org.mpris.MediaPlayer2.Player", member],
-                )
-                reply = await bus.call(message)
+                reply = await self._dbus_helper("Get", "ss", ["org.mpris.MediaPlayer2.Player", member])
+
                 if reply.message_type == DBusMessageType.METHOD_RETURN:
                     if member == "PlaybackStatus":
-                        state["playing"] = reply.body[0] == "Playing"
+                        state.update(
+                            {
+                                "playing": True,
+                                "paused": reply.body[0] == "Paused",
+                            }
+                        )
                     else:
                         state[member.lower()] = round(reply.body[0] / 1000000)
                 else:
                     error = True
 
-            if error or not state["playing"]:
-                state = {"position": None, "duration": None, "playing": False}
+            if error:
+                state = {"position": None, "duration": None, "playing": False, "paused": False}
             else:
                 currently_playing = self.get_state("currently_playing")
                 duration = datetime.timedelta(seconds=state["duration"])
