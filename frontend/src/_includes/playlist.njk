@@ -13,16 +13,16 @@
         isPlaying() {
           return $store.player.currentlyPlaying === video.path
         },
-        isRRatedDisabled() {
+        isRRatedDisabled () {
           return video.isRRated && !$store.player.playRRated
         },
-        resetEdit(edit = true) {
+        resetEdit (edit = true) {
           this.edit = edit
           this.titleEdit = video.title
           this.descriptionEdit = video.description
           this.isRRatedEdit = video.isRRated
         },
-        update() {
+        update () {
           $store.player.update(video.path, {
             title: this.titleEdit || video.title,
             description: this.descriptionEdit,

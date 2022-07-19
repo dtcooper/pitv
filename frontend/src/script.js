@@ -12,7 +12,7 @@ window.Alpine = Alpine
 document.addEventListener('alpine:init', () => {
   let socket
 
-  function sendJson (data) {
+  function sendJSON (data) {
     socket.send(JSON.stringify(data))
   }
 
@@ -60,32 +60,32 @@ document.addEventListener('alpine:init', () => {
     },
 
     setPosition (seconds) {
-      sendJson({ position: seconds })
+      sendJSON({ position: seconds })
     },
 
     seek (seconds) {
-      sendJson({ seek: seconds })
+      sendJSON({ seek: seconds })
     },
 
     playRandom () {
-      sendJson({ playRandom: true })
+      sendJSON({ playRandom: true })
     },
 
     play (path) {
-      sendJson({ play: path })
+      sendJSON({ play: path })
     },
 
     update (path, data) {
       data.filename = path
-      sendJson({ update: data })
+      sendJSON({ update: data })
     },
 
     togglePlayRRated () {
-      sendJson({ togglePlayRRated: true })
+      sendJSON({ togglePlayRRated: true })
     },
 
     playPause () {
-      sendJson({ playPause: true })
+      sendJSON({ playPause: true })
     }
   })
 
@@ -95,7 +95,7 @@ document.addEventListener('alpine:init', () => {
     badPassword: true,
     enterPassword: false,
     hasSocketOpenedBefore: false,
-    connected: false, // Final state, ready to use the player
+    connected: false, // Final state, ready to use the player, set after first message
     interstitialDescription: 'Connecting',
     interstitialAlertClass: 'alert-info',
     socket: null,
