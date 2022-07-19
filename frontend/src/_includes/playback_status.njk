@@ -15,7 +15,7 @@
     <div
       class="flex{% if name !== 'position' %} cursor-pointer hover:text-secondary{% endif %}"
       {% if name === 'position' %}
-        :class="{'text-error': $store.player.paused}"
+        :class="{'text-error animate-pulse': $store.player.paused}"
       {% else %}
         x-show="{% if name === 'timeleft' %}!{% endif %}duration"
         @click="duration = !duration"
@@ -41,7 +41,7 @@
 <div class="btn-group flex justify-center">
   <button
     class="btn"
-    :class="$store.player.paused ? 'btn-error animate-pulse' : 'btn-ghost'"
+    :class="$store.player.paused ? 'animate-pulse' : 'btn-ghost'"
     :disabled="!$store.player.playing"
     @click="$store.player.playPause()"
   >

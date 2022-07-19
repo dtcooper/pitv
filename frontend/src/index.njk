@@ -8,6 +8,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap" rel="stylesheet">
   <link href="{{ static("styles.css") }}" rel="stylesheet">
+  {% if DEBUG %}
+    {# Polka dot background when DEBUG mode is on #}
+    <style>
+      body {
+        background-image: radial-gradient(hsl(var(--b2)) 0%, transparent 45%),
+            radial-gradient(hsl(var(--b2)) 0%, transparent 45%);
+        background-position: 0 0, 50px 50px;
+        background-size: 100px 100px;
+      }
+    </style>
+  {% endif %}
   <script src="{{ static("script.js") }}" defer></script>
   <script>
     const DATA = {
