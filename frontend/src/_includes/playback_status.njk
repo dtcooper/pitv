@@ -13,7 +13,7 @@
 >
   {% for name in ['position', 'duration', 'timeleft'] %}
     <div
-      class="flex{% if name !== 'position' %} cursor-pointer hover:text-primary{% endif %}"
+      class="flex{% if name !== 'position' %} cursor-pointer hover:text-secondary{% endif %}"
       {% if name === 'position' %}
         :class="{'text-error': $store.player.paused}"
       {% else %}
@@ -30,7 +30,7 @@
     {% if name === 'position' %}
       <progress class="progress grow h-2 md:h-5" x-show="!$store.player.playing"></progress>
       <progress
-        class="progress grow h-2 md:h-5 cursor-pointer hover:progress-primary"
+        class="progress grow h-2 md:h-5 cursor-pointer hover:progress-secondary"
         x-show="$store.player.playing" :value="$store.player.position" :max="$store.player.duration"
         @click="(event) => $store.player.setPosition(event.offsetX / $el.clientWidth * $store.player.duration)"
       ></progress>
