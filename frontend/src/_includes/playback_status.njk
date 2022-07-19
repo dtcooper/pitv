@@ -1,5 +1,5 @@
 <div
-  class="flex gap-2 justify-center items-center text-center text-lg italic mb-1"
+  class="flex gap-2 justify-center items-center text-center font-bold text-base md:text-lg italic mb-1"
   :class="{'animate-pulse': !$store.player.currentlyPlaying}"
 >
   <span x-text="$store.player.currentlyPlayingVideo('title') || 'Loading...'"></span>
@@ -53,8 +53,10 @@
   {%
     for command, icon, amount in [
       ['setPosition', 'mdi:rewind', '0'],
+      ['seek', 'mdi:rewind-60', '-60'],
       ['seek', 'mdi:rewind-15', '-15'],
-      ['seek', 'mdi:fast-forward-15', '15']
+      ['seek', 'mdi:fast-forward-15', '15'],
+      ['seek', 'mdi:fast-forward-60', '60']
     ]
   %}
     <button
