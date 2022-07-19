@@ -65,7 +65,7 @@ class VideosStore(SingletonBaseClass, MutableMapping):
     TASKS = ("watch_for_videos",)
     JSON_DB_PATH = settings.VIDEOS_DIR / ".videos.json"
     JSON_DB_PATH_TMP = JSON_DB_PATH.parent / f"{JSON_DB_PATH.stem}.tmp.json"
-    DATA_FILENAMES = {JSON_DB_PATH.name, JSON_DB_PATH_TMP.name}
+    JSON_DATA_FILES = {JSON_DB_PATH, JSON_DB_PATH_TMP}
     EDITABLE_ATTRS = ("title", "description", "is_r_rated")
 
     def __init__(self, app):
@@ -73,16 +73,9 @@ class VideosStore(SingletonBaseClass, MutableMapping):
 
         self._in_transaction = False
         self._videos = {}
+        self._play_r_rated = True
 
-        if self.JSON_DB_PATH.exists():
-            try:
-                with open(self.JSON_DB_PATH, "r") as file:
-                    videos = json.load(file)
-
-                videos = (Video(**kwargs) for kwargs in videos)
-                self._videos = {video.filename: video for video in videos}
-            except Exception:
-                logger.exception("Error deserializing videos JSON file. Ignoring.")
+        self.load_data()
 
         with self.transaction():
             for video_path in settings.VIDEOS_DIR.iterdir():
@@ -93,6 +86,15 @@ class VideosStore(SingletonBaseClass, MutableMapping):
                 if not video.path.exists():
                     del self[video]
 
+    @property
+    def play_r_rated(self):
+        return self._play_r_rated
+
+    async def toggle_play_r_rated(self):
+        self._play_r_rated = not self._play_r_rated
+        self.save_data()
+        await self.app.state.player.set_state(play_r_rated=self.play_r_rated)
+
     async def watch_for_videos(self):
         async for changes in awatch(
             settings.VIDEOS_DIR,
@@ -100,23 +102,34 @@ class VideosStore(SingletonBaseClass, MutableMapping):
         ):
             for change, path in changes:
                 path = Path(path)
-                if path not in self.DATA_FILENAMES:
-                    if change == WatchFilesChange.added and path.is_file():
-                        self.create(path)
-                    elif change == WatchFilesChange.deleted and path in self:
-                        del self[path]
-            await self.app.state.player.set_state(videos=self.as_json())
+                if change == WatchFilesChange.added and path.is_file():
+                    self.create(path)
+                elif change == WatchFilesChange.deleted and path in self:
+                    del self[path]
+            await self.app.state.player.set_state(videos=self.as_json(), play_r_rated=self.play_r_rated)
 
     @contextmanager
     def transaction(self):
         self._in_transaction = True
         yield
         self._in_transaction = False
-        self.save()
+        self.save_data()
 
-    def save(self):
+    def load_data(self):
+        if self.JSON_DB_PATH.exists():
+            try:
+                with open(self.JSON_DB_PATH, "r") as file:
+                    data = json.load(file)
+
+                videos = (Video(**kwargs) for kwargs in data["videos"])
+                self._videos = {video.filename: video for video in videos}
+                self._play_r_rated = data["play_r_rated"]
+            except Exception:
+                logger.exception("Error deserializing videos JSON file. Ignoring.")
+
+    def save_data(self):
         with open(self.JSON_DB_PATH_TMP, "w") as file:
-            json.dump(self.as_json(), file, indent=2, sort_keys=True)
+            json.dump({"videos": self.as_json(), "play_r_rated": self.play_r_rated}, file, indent=2, sort_keys=True)
             file.write("\n")
 
         # Atomic operation (write to temp file first)
@@ -131,14 +144,14 @@ class VideosStore(SingletonBaseClass, MutableMapping):
     def __setitem__(self, filename, value):
         self._videos[filename] = value
         if not self._in_transaction:
-            self.save()
+            self.save_data()
 
     @convert_arg_to_filename
     def __delitem__(self, filename):
         logger.info(f"Removing video: {filename}")
         del self._videos[filename]
         if not self._in_transaction:
-            self.save()
+            self.save_data()
 
     def __iter__(self):
         return (key for key, _ in self.items())
@@ -165,7 +178,7 @@ class VideosStore(SingletonBaseClass, MutableMapping):
                     updated = True
 
             if updated:
-                self.save()
+                self.save_data()
                 await self.app.state.player.set_state(videos=self.as_json())
 
         else:
@@ -175,7 +188,7 @@ class VideosStore(SingletonBaseClass, MutableMapping):
         return len(self._videos)
 
     def create(self, path, **kwargs):
-        if path not in self and path.name not in self.DATA_FILENAMES:
+        if path not in self and path not in self.JSON_DATA_FILES:
             logger.info(f"Creating video: {path.name}")
             self[path.name] = Video(path, **kwargs)
 
@@ -183,6 +196,6 @@ class VideosStore(SingletonBaseClass, MutableMapping):
         return [v.as_dict() for v in self.values()]
 
     def random(self):
-        choices = list(self._videos.values())
+        choices = [v for v in self._videos.values() if self.play_r_rated or not v.is_r_rated]
         if choices:
             return random.choice(choices)

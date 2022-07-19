@@ -2,6 +2,7 @@ import asyncio
 from functools import wraps
 import hmac
 import logging
+import re
 import sys
 import time
 import typing
@@ -14,6 +15,7 @@ from . import settings
 AUTO_RESTART_SLEEP_TIME = 2.5
 AUTO_RESTART_MIN_TRIES = 5
 AUTO_RESTART_AVERAGE_COROUTINE_FAIL_TIME_BEFORE_EXIT = 15
+UPPERCASE_RE = re.compile(r"(?<!^)(?=[A-Z])")
 
 
 logger = logging.getLogger(__name__)
@@ -77,6 +79,23 @@ def verify_password(password: str):
         password.encode("utf-8"),
         str(settings.PASSWORD).encode("utf-8"),
     )
+
+
+def underscore_to_camel(s):
+    return "".join(w.capitalize() if n > 0 else w for n, w in enumerate(s.split("_")))
+
+
+def camel_to_underscore(s):
+    return UPPERCASE_RE.sub("_", s).lower()
+
+
+def convert_to_camel(obj):
+    if isinstance(obj, dict):
+        return {underscore_to_camel(k): convert_to_camel(v) for k, v in obj.items()}
+    elif isinstance(obj, (tuple, list)):
+        return list(map(convert_to_camel, obj))
+    else:
+        return obj
 
 
 def init_pkg_logger():

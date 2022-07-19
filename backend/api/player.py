@@ -11,7 +11,7 @@ from dbus_next import Message as DBusMessage, MessageType as DBusMessageType
 from dbus_next.aio import MessageBus as DBusMessageBus
 
 from . import settings
-from .util import SingletonBaseClass
+from .util import convert_to_camel, SingletonBaseClass
 from .videos import VideosStore
 
 
@@ -37,17 +37,17 @@ class Player(SingletonBaseClass):
         self._dbus_message_bus = None
         self.videos: VideosStore = self.app.state.videos
         self.websockets = app.state.authorized_websockets
-        self.currently_playing = None
         self.stop_playing_event = asyncio.Event()
         self.next_video_request = None
         self._state = {
             # JS object style keys
             "videos": self.videos.as_json(),
-            "currentlyPlaying": None,
+            "currently_playing": None,
             "download": None,
             "position": None,
             "duration": None,
             "playing": False,
+            "play_r_rated": self.videos.play_r_rated,
         }
 
     async def _kill(self, signal: int):
@@ -148,25 +148,35 @@ class Player(SingletonBaseClass):
         logger.info("Requesting random video")
         self.stop_playing_event.set()
 
-    async def set_state(self, **kwargs):
-        message = {}
-        for key, value in kwargs.items():
-            if key in self._state:
-                old_value = self._state[key]
-                if old_value != value:
-                    self._state[key] = message[key] = value
-            else:
-                logger.error(f"Invalid player state key: {key}")
+    def get_state(self, key=None):
+        return self._state if key is None else self._state[key]
+
+    async def set_state(self, authorize_websocket=None, **kwargs):
+        if authorize_websocket is None:
+            message = {}
+            for key, value in kwargs.items():
+                if key in self._state:
+                    old_value = self._state[key]
+                    if old_value != value:
+                        self._state[key] = message[key] = value
+                else:
+                    logger.error(f"Invalid player state key: {key}")
+            websockets = self.websockets
+
+        else:
+            websockets = (authorize_websocket,)
+            message = self._state  # Send entire state
 
         if message:
-            for websocket in self.websockets:
+            message = convert_to_camel(message)
+            for websocket in websockets:
                 try:
                     await websocket.send_json(message)
                 except Exception:
                     logger.exception("Couldn't write to websocket")
 
-    def get_state(self, key=None):
-        return self._state if key is None else self._state[key]
+        if authorize_websocket is not None:
+            self.websockets.add(websocket)
 
     async def get_dbus_message_bus(self):
         if self._dbus_message_bus is None:
@@ -240,7 +250,7 @@ class Player(SingletonBaseClass):
             if error or not state["playing"]:
                 state = {"position": None, "duration": None, "playing": False}
             else:
-                currently_playing = self.get_state("currentlyPlaying")
+                currently_playing = self.get_state("currently_playing")
                 duration = datetime.timedelta(seconds=state["duration"])
                 await self.videos.update_video(currently_playing, duration=duration)
 
@@ -263,11 +273,11 @@ class Player(SingletonBaseClass):
                     "--aspect-mode",
                     "stretch",
                     video.path,
-                    # stdout=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
                 )
                 proc_start_time = time.time()
                 logger.info(f"player started: {video.filename}")
-                await self.set_state(currentlyPlaying=video.filename)
+                await self.set_state(currently_playing=video.filename)
 
                 wait_tasks = {
                     (proc_wait_task := asyncio.create_task(proc.wait())),
@@ -301,10 +311,10 @@ class Player(SingletonBaseClass):
                             await self.set_state(videos=self.videos.as_json())
 
                 logger.info("Player exited. Restarting")
-                await self.set_state(currentlyPlaying=None)
+                await self.set_state(currently_playing=None)
 
             else:
                 logger.warning("No videos to play.")
-                await self.set_state(currentlyPlaying=None)
+                await self.set_state(currently_playing=None)
 
             await asyncio.sleep(settings.PLAYER_BETWEEN_VIDEO_SLEEP)

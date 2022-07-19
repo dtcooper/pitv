@@ -12,7 +12,7 @@ from starlette.websockets import WebSocket
 
 from . import settings
 from .player import Player
-from .util import init_pkg_logger, verify_password
+from .util import camel_to_underscore, init_pkg_logger, verify_password
 from .videos import VideosStore
 
 
@@ -46,10 +46,15 @@ class BackendEndpoint(WebSocketEndpoint):
     def command_download(self, url):
         asyncio.create_task(self.player.request_url(url))
 
+    async def command_toggle_play_r_rated(self, _):
+        await self.videos.toggle_play_r_rated()
+
     async def command_update(self, kwargs):
         filename = kwargs.pop("filename")
+        kwargs = {camel_to_underscore(k): v for k, v in kwargs.items()}
         for key in kwargs.keys():
             if key not in VideosStore.EDITABLE_ATTRS:
+                logger.error(f"Invalid key for update: {key}")
                 return
         await self.videos.update_video(filename, **kwargs)
 
@@ -64,9 +69,7 @@ class BackendEndpoint(WebSocketEndpoint):
             self.authorized = True
             self.encoding = "json"
             await websocket.send_text(self.PASSWORD_ACCEPTED)
-            # Start by sending entire player state (then incremental changes)
-            await websocket.send_json(self.player.get_state())
-            self.authorized_websockets.add(websocket)
+            await self.player.set_state(authorize_websocket=websocket)
         else:
             await asyncio.sleep(random.uniform(0.25, 1.25))
             await websocket.send_text(self.PASSWORD_DENIED)
@@ -74,6 +77,7 @@ class BackendEndpoint(WebSocketEndpoint):
     async def on_receive_authorized(self, websocket: WebSocket, data: dict):
         if isinstance(data, dict):
             for command, value in data.items():
+                command = camel_to_underscore(command)
                 method = getattr(self, f"command_{command}", None)
                 if method is not None:
                     if asyncio.iscoroutinefunction(method):
