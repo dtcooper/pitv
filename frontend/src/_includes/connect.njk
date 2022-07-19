@@ -27,10 +27,7 @@
       <input
         id="password-input"
         class="input input-lg input-bordered input-secondary tracking-wider"
-        :class="{
-          'input-secondary': !$store.conn.badPassword,
-          'input-error': $store.conn.badPassword
-        }"
+        :class="$store.conn.badPassword ? 'input-error' : 'input-secondary'"
         type="password"
         :type="showPassword ? 'text' : 'password'"
         @input="$store.conn.badPassword = false"

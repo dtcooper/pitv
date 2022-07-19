@@ -53,7 +53,8 @@
           <span
             class="badge badge-sm md:badge-md badge-accent"
             x-show="video.duration > 0"
-            x-text="$store.player.formatDuration(video.duration)"></span>
+            x-text="$store.player.formatDuration(video.duration)"
+          ></span>
         </span>
 
         <button class="btn btn-xs btn-ghost btn-square" @click.stop="resetEdit(true)" x-show="!edit">

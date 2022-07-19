@@ -82,6 +82,10 @@ document.addEventListener('alpine:init', () => {
 
     togglePlayRRated () {
       sendJson({ togglePlayRRated: true })
+    },
+
+    playPause () {
+      sendJson({ playPause: true })
     }
   })
 

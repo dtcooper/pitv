@@ -14,7 +14,9 @@
   {% for name in ['position', 'duration', 'timeleft'] %}
     <div
       class="flex{% if name !== 'position' %} cursor-pointer hover:text-primary{% endif %}"
-      {% if name !== 'position' %}
+      {% if name === 'position' %}
+        :class="{'text-error': $store.player.paused}"
+      {% else %}
         x-show="{% if name === 'timeleft' %}!{% endif %}duration"
         @click="duration = !duration"
       {% endif %}
@@ -37,10 +39,15 @@
 </div>
 
 <div class="btn-group flex justify-center">
-  <button class="btn btn-ghost" :disabled="!$store.player.playing">
+  <button
+    class="btn"
+    :class="$store.player.paused ? 'btn-error animate-pulse' : 'btn-ghost'"
+    :disabled="!$store.player.playing"
+    @click="$store.player.playPause()"
+  >
     <span
       class="iconify h-6 w-6 md:h-8 md:w-8"
-      :data-icon="$store.player.paused ? 'mdi:pause' : 'mdi:play'"
+      :data-icon="$store.player.paused ? 'mdi:play' : 'mdi:pause'"
     ></span>
   </button>
   {%
@@ -53,6 +60,7 @@
     <button
       class="btn btn-ghost"
       :class="{'pointer-events-none': !$store.player.playing}"
+      :disabled="!$store.player.playing"
       @click="$store.player.{{ command }}({{ amount }})"
     >
       <span class="iconify h-6 w-6 md:h-8 md:w-8" data-icon="{{ icon }}"></span>

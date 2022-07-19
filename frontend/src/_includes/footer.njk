@@ -2,11 +2,8 @@
   <button class="btn btn-ghost gap-2" @click="$store.player.togglePlayRRated()">
     <span class="underline">R</span> Rated Content:
       <span
-        :class="{
-          'text-success': $store.player.playRRated,
-          'text-error': !$store.player.playRRated
-        }"
-        x-text="$store.player.playRRated ? 'Playing' : 'Not playing'">
-      </span>
+        :class="$store.player.playRRated ? 'text-success' : 'text-error'"
+        x-text="$store.player.playRRated ? 'Playing' : 'Not playing'"
+      ></span>
   </button>
 </div>
