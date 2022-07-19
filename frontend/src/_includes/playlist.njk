@@ -44,7 +44,7 @@
         :class="{'cursor-pointer': !isPlaying() && !isRRatedDisabled()}"
       >
         <span
-          class="grow flex items-center gap-2 bold pr-2.5"
+          class="grow flex items-center gap-1.5 md:gap-2 text-sm md:text-base pr-2.5"
           :class="{'text-gray-500': !isPlaying() && isRRatedDisabled()}"
         >
           <span class="italic font-bold" x-text="`${index + 1}.`"></span>
