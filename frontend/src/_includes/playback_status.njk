@@ -46,7 +46,7 @@
     @click="$store.player.playPause()"
   >
     <span
-      class="iconify h-6 w-6 md:h-8 md:w-8"
+      class="iconify h-6 w-6 h-8 w-8"
       :data-icon="$store.player.paused ? 'mdi:play' : 'mdi:pause'"
     ></span>
   </button>
@@ -60,15 +60,15 @@
     ]
   %}
     <button
-      class="btn btn-ghost"
+      class="btn btn-ghost{% if amount|abs === 60 %} hidden md:inline-flex{% endif %}"
       :class="{'pointer-events-none': !$store.player.playing}"
       :disabled="!$store.player.playing"
       @click="$store.player.{{ command }}({{ amount }})"
     >
-      <span class="iconify h-6 w-6 md:h-8 md:w-8" data-icon="{{ icon }}"></span>
+      <span class="iconify h-8 w-8" data-icon="{{ icon }}"></span>
     </button>
   {% endfor %}
   <button class="btn btn-ghost" @click="$store.player.playRandom()">
-    <span class="iconify h-6 w-6 md:h-8 md:w-8" data-icon="mdi:shuffle-variant"></span>
+    <span class="iconify h-8 w-8" data-icon="mdi:shuffle-variant"></span>
   </button>
 </div>
