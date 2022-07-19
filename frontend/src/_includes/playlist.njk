@@ -1,49 +1,55 @@
 <div class="flex flex-col flex-1">
   <template
     x-for="(video, index) in $store.player.videos"
-    :key="`${video.title}:${video.description}:${video.is_r_rated}:${video.duration}`"
+    :key="`${video.title}:${video.description}:${video.isRRated}:${video.duration}`"
   >
     <div
       class="odd:bg-base-200 px-2 py-2"
       x-data="{
         edit: false,
-        title: '',
-        description: '',
-        isRRated: false,
+        titleEdit: '',
+        descriptionEdit: '',
+        isRRatedEdit: false,
         isPlaying() {
           return $store.player.currentlyPlaying === video.path
         },
+        isRRatedDisabled() {
+          return video.isRRated && !$store.player.playRRated
+        },
         resetEdit(edit = true) {
           this.edit = edit
-          this.title = video.title
-          this.description = video.description
-          this.isRRated = video.is_r_rated
+          this.titleEdit = video.title
+          this.descriptionEdit = video.description
+          this.isRRatedEdit = video.isRRated
         },
         update() {
           $store.player.update(video.path, {
-            title: this.title || video.title,
-            description: this.description,
-            is_r_rated: this.isRRated
+            title: this.titleEdit || video.title,
+            description: this.descriptionEdit,
+            isRRated: this.isRRatedEdit
           })
           this.edit = false
         }
       }"
       :class="{
           '!bg-secondary': isPlaying(),
-          'hover:bg-base-300': !isPlaying(),
-          'cursor-pointer': !isPlaying() && !edit
+          'hover:bg-base-300': !isPlaying() && !isRRatedDisabled(),
+          'cursor-pointer': !edit && !isPlaying() && !isRRatedDisabled()
       }"
-      @click="if (!isPlaying() && !edit) { $store.player.play(video.path) }"
+      @click="if (!edit && !isPlaying() && !isRRatedDisabled()) { $store.player.play(video.path) }"
     >
       <p
         class="flex items-center"
-        @click.stop="if (!isPlaying()) { $store.player.play(video.path) }"
-        :class="{'cursor-pointer': !isPlaying()}"
+        @click.stop="if (!isPlaying() && !isRRatedDisabled()) { $store.player.play(video.path) }"
+        :class="{'cursor-pointer': !isPlaying() && !isRRatedDisabled()}"
       >
-        <span class="grow flex items-center gap-2 bold pr-2.5">
+        <span
+          class="grow flex items-center gap-2 bold pr-2.5"
+          :class="{'text-gray-500': !isPlaying() && isRRatedDisabled()}"
+        >
           <span class="italic font-bold" x-text="`${index + 1}.`"></span>
           <span class="italic font-bold grow" x-text="video.title"></span>
-          <span x-show="video.is_r_rated" class="badge badge-sm md:badge-md badge-error">R</span>
+          <span x-show="video.isRRated" class="badge badge-sm md:badge-md badge-error">R</span>
           <span
             class="badge badge-sm md:badge-md badge-accent"
             x-show="video.duration > 0"
@@ -67,7 +73,7 @@
         <div class="form-control">
           <label class="label cursor-pointer gap-2">
             <span class="label-text font-bold">Title:</span>
-            <input type="input" class="input input-sm md:input-md input-primary grow" x-model="title">
+            <input type="input" class="input input-sm md:input-md input-primary grow" x-model="titleEdit">
           </label>
         </div>
 
@@ -76,7 +82,7 @@
             <span class="label-text font-bold">Description:</span>
             <textarea
               class="textarea textarea-sm md:textarea-md textarea-primary h-16 md:h-24 self-stretch"
-              x-model="description"
+              x-model="descriptionEdit"
               placeholder="Enter a description or leave empty..."
             ></textarea>
           </label>
@@ -84,8 +90,8 @@
 
         <div class="form-control">
           <label class="label self-start cursor-pointer justify-start gap-3">
-            <span class="label-text font-bold">Is Rated <span class="italic">R</span>?</span>
-            <input type="checkbox" checked="checked" class="checkbox checkbox-primary" x-model="isRRated">
+            <span class="label-text font-bold">Is Rated <span style="undliner">R</span>?</span>
+            <input type="checkbox" checked="checked" class="checkbox checkbox-primary" x-model="isRRatedEdit">
           </label>
         </div>
 

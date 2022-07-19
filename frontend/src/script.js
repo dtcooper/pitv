@@ -17,7 +17,6 @@ document.addEventListener('alpine:init', () => {
   }
 
   Alpine.store('player', {
-    currentlyPlayingPretty: null,
     /* Copied from backend/api/player.py:Player._state */
     videos: null,
     currentlyPlaying: null,
@@ -25,22 +24,17 @@ document.addEventListener('alpine:init', () => {
     position: null,
     duration: null,
     playing: null,
+    playRRated: null,
 
-    init () {
-      Alpine.effect(() => {
-        if (this.currentlyPlaying === null) {
-          this.currentlyPlayingPretty = 'Loading...'
-        } else {
-          let pretty = this.currentlyPlaying
-          for (const video of (this.videos || [])) {
-            if (video.path === this.currentlyPlaying) {
-              pretty = video.title
-              break
-            }
+    currentlyPlayingVideo (attr = null) {
+      if (this.currentlyPlaying !== null) {
+        for (const video of (this.videos || [])) {
+          if (video.path === this.currentlyPlaying) {
+            return attr === null ? video : video[attr]
           }
-          this.currentlyPlayingPretty = pretty
         }
-      })
+      }
+      return null
     },
 
     formatDuration (s, forceHour = false) {
@@ -74,7 +68,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     playRandom () {
-      sendJson({ play_random: true })
+      sendJson({ playRandom: true })
     },
 
     play (path) {
@@ -84,6 +78,10 @@ document.addEventListener('alpine:init', () => {
     update (path, data) {
       data.filename = path
       sendJson({ update: data })
+    },
+
+    togglePlayRRated () {
+      sendJson({ togglePlayRRated: true })
     }
   })
 

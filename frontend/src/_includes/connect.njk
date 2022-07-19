@@ -2,10 +2,7 @@
   class="absolute inset-0 pointer-none flex items-center justify-center"
   x-show="!$store.conn.enterPassword"
 >
-  <div
-    class="alert w-auto shadow-xl"
-    :class="$store.conn.interstitialAlertClass"
-  >
+  <div class="alert w-auto" :class="$store.conn.interstitialAlertClass">
     <div class="animate-pulse flex">
       <span class="iconify h-8 w-8 md:h-12 md:w-12 md:mr-1.5" data-icon="mdi:lan-connect"></span>
       <span class="text-xl md:text-3xl italic font-bold" x-text="`${$store.conn.interstitialDescription}...`">

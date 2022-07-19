@@ -1,7 +1,6 @@
 module.exports = {
   content: [
-    './src/**/*.njk',
-    './src/**/*.js'
+    './src/**/*.{html,js,njk}'
   ],
   theme: {
     screens: {
@@ -26,7 +25,8 @@ module.exports = {
         '--rounded-box': '0',
         '--rounded-btn': '0',
         '--rounded-badge': '0',
-        '--tab-radius': '0'
+        '--tab-radius': '0',
+        '--btn-text-case': 'none'
       }
     }]
   },

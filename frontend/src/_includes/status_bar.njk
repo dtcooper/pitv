@@ -1,8 +1,10 @@
 <div
-  class="text-center text-lg italic mb-1"
+  class="flex gap-2 justify-center items-center text-center text-lg italic mb-1"
   :class="{'animate-pulse': !$store.player.currentlyPlaying}"
-  x-text="$store.player.currentlyPlayingPretty"
-></div>
+>
+  <span x-text="$store.player.currentlyPlayingVideo('title') || 'Loading...'"></span>
+  <span x-show="$store.player.currentlyPlayingVideo('isRRated')" class="badge badge-error">R</span>
+</div>
 
 <div
   class="flex items-center text-base md:text-xl space-x-3 mx-2 md:mx-0 md:mb-1"
@@ -42,16 +44,16 @@
     ></span>
   </button>
   {%
-    for command, icon, seek in [
-      ['setPosition', 'mdi:rewind', 0],
-      ['seek', 'mdi:rewind-15', -15],
-      ['seek', 'mdi:fast-forward-15', 15]
+    for command, icon, amount in [
+      ['setPosition', 'mdi:rewind', '0'],
+      ['seek', 'mdi:rewind-15', '-15'],
+      ['seek', 'mdi:fast-forward-15', '15']
     ]
   %}
     <button
       class="btn btn-ghost"
       :class="{'pointer-events-none': !$store.player.playing}"
-      @click="$store.player.{{ command }}({{ seek }})"
+      @click="$store.player.{{ command }}({{ amount }})"
     >
       <span class="iconify h-6 w-6 md:h-8 md:w-8" data-icon="{{ icon }}"></span>
     </button>
