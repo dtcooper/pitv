@@ -12,20 +12,29 @@
   x-data="{duration: $persist(true).as('playerShowDuration')}"
 >
   {% for name in ['position', 'duration', 'timeleft'] %}
-    <div
-      class="flex{% if name !== 'position' %} cursor-pointer hover:text-secondary{% endif %}"
-      {% if name === 'position' %}
-        :class="{'text-error animate-pulse': $store.player.paused}"
-      {% else %}
+    {% if name !== 'position'%}
+      <div
+        class="md:tooltip md:tooltip-left"
+        data-tip="Switch to {% if name == 'duration'%}duration{% else %}time left{% endif %}"
         x-show="{% if name === 'timeleft' %}!{% endif %}duration"
-        @click="duration = !duration"
-      {% endif %}
-    >
-      {% if name === 'timeleft' %}
-        <span>-</span>
-      {% endif %}
-      <span x-text="$store.player.pretty{{ name|title }}()"></span>
-    </div>
+      >
+    {% endif %}
+        <div
+          class="flex{% if name !== 'position' %} cursor-pointer hover:text-secondary{% endif %}"
+          {% if name === 'position' %}
+            :class="{'text-error animate-pulse': $store.player.paused}"
+          {% else %}
+            @click="duration = !duration"
+          {% endif %}
+        >
+          {% if name === 'timeleft' %}
+            <span>-</span>
+          {% endif %}
+          <span x-text="$store.player.pretty{{ name|title }}()"></span>
+        </div>
+    {% if name !== 'position' %}
+      </div>
+    {% endif %}
 
     {% if name === 'position' %}
       <div
@@ -54,46 +63,54 @@
 
 {# TODO better button layout ion mobile #}
 <div class="btn-group flex justify-center">
-  <button
-    class="btn"
-    :class="$store.player.paused ? 'animate-pulse' : 'btn-ghost'"
-    :disabled="!$store.player.playing"
-    @click="$store.player.playPause()"
-  >
-    <span
-      class="iconify h-7 w-7 md:h-8 md:w-8"
-      :data-icon="$store.player.paused ? 'mdi:play' : 'mdi:pause'"
-    ></span>
-  </button>
+  <div class="md:tooltip md:tooltip-bottom" :data-tip="$store.player.paused ? 'Unpause' : 'Pause'">
+    <button
+      class="btn"
+      :class="$store.player.paused ? 'animate-pulse' : 'btn-ghost'"
+      :disabled="!$store.player.playing"
+      @click="$store.player.playPause()"
+    >
+      <span
+        class="iconify h-7 w-7 md:h-8 md:w-8"
+        :data-icon="$store.player.paused ? 'mdi:play' : 'mdi:pause'"
+      ></span>
+    </button>
+  </div>
   {%
-    for command, icon, amount in [
-      ['setPosition', 'mdi:rewind', '0'],
-      ['seek', 'mdi:rewind-60', '-60'],
-      ['seek', 'mdi:rewind-15', '-15'],
-      ['seek', 'mdi:fast-forward-15', '15'],
-      ['seek', 'mdi:fast-forward-60', '60']
+    for command, icon, amount, tooltip in [
+      ['setPosition', 'mdi:rewind', '0', 'Rewind to beginning'],
+      ['seek', 'mdi:rewind-60', '-60', 'Rewind 60 seconds'],
+      ['seek', 'mdi:rewind-15', '-15', 'Rewind 15 seconds'],
+      ['seek', 'mdi:fast-forward-15', '15', 'Fast forward 15 seconds'],
+      ['seek', 'mdi:fast-forward-60', '60', 'Fast forward 60 seconds']
     ]
   %}
-    <button
-      class="btn btn-ghost{% if amount|abs === 60 %} hidden md:inline-flex{% endif %}"
-      :class="{'pointer-events-none': !$store.player.playing}"
-      :disabled="!$store.player.playing"
-      @click="$store.player.{{ command }}({{ amount }})"
-    >
-      <span class="iconify h-7 w-7 md:h-8 md:w-8" data-icon="{{ icon }}"></span>
-    </button>
+    <div class="md:tooltip md:tooltip-bottom" data-tip="{{ tooltip }}">
+      <button
+        class="btn btn-ghost{% if amount|abs === 60 %} hidden md:inline-flex{% endif %}"
+        :class="{'pointer-events-none': !$store.player.playing}"
+        :disabled="!$store.player.playing"
+        @click="$store.player.{{ command }}({{ amount }})"
+      >
+        <span class="iconify h-7 w-7 md:h-8 md:w-8" data-icon="{{ icon }}"></span>
+      </button>
+    </div>
   {% endfor %}
-  <button class="btn btn-ghost" @click="$store.player.playRandom()">
-    <span class="iconify h-7 w-7 md:h-8 md:w-8" data-icon="mdi:shuffle-variant"></span>
-  </button>
-  <button
-    class="btn"
-    :class="$store.player.muted ? 'btn-error animate-pulse' : 'btn-ghost'"
-    @click="$store.player.toggleMute()"
-  >
-    <span
-      class="iconify h-7 w-7 md:h-8 md:w-8"
-      :data-icon="$store.player.muted ? 'mdi:volume-mute' : 'mdi:volume-high'"
-    ></span>
-  </button>
+  <div class="md:tooltip md:tooltip-bottom" data-tip="Shuffle (play random)">
+    <button class="btn btn-ghost" @click="$store.player.playRandom()">
+      <span class="iconify h-7 w-7 md:h-8 md:w-8" data-icon="mdi:shuffle-variant"></span>
+    </button>
+  </div>
+  <div class="md:tooltip md:tooltip-bottom" :data-tip="$store.player.muted ? 'Unmute' : 'Mute'">
+    <button
+      class="btn"
+      :class="$store.player.muted ? 'btn-error animate-pulse' : 'btn-ghost'"
+      @click="$store.player.toggleMute()"
+    >
+      <span
+        class="iconify h-7 w-7 md:h-8 md:w-8"
+        :data-icon="$store.player.muted ? 'mdi:volume-mute' : 'mdi:volume-high'"
+      ></span>
+    </button>
+  </div>
 </div>
