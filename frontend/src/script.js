@@ -101,6 +101,13 @@ document.addEventListener('alpine:init', () => {
     socket: null,
     password: Alpine.$persist('').as('password'),
     init () {
+      const hash = new URLSearchParams(window.location.hash.substring(1))
+      const hashPassword = hash.get('pw')
+      if (hashPassword) {
+        window.history.replaceState({}, document.title, '.') // Remove hash from URL
+        this.password = hashPassword
+      }
+
       let websocketPrefix
       if (DATA.DEBUG && DATA.WEBSOCKET_URL_DEV_OVERRIDE) {
         websocketPrefix = DATA.WEBSOCKET_URL_DEV_OVERRIDE
