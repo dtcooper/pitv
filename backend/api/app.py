@@ -55,6 +55,9 @@ class BackendEndpoint(WebSocketEndpoint):
     async def command_toggle_play_r_rated(self, _):
         await self.videos.toggle_play_r_rated()
 
+    async def command_toggle_mute(self, _):
+        await self.videos.toggle_mute()
+
     async def command_play_pause(self, _):
         await self.player.play_pause()
 

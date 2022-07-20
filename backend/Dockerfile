@@ -31,6 +31,8 @@ RUN dpkg --add-architecture armhf \
     && apt-get upgrade -y \
     && wget -qO /tmp/omxplayer.deb "$OMXPLAYER_DEB_URL" \
     && apt-get install --no-install-recommends -y \
+        # To mute/unmute
+        alsa-utils \
         # To set background
         fbi \
         ffmpeg \

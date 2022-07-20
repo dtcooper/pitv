@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import MutableMapping
 from contextlib import contextmanager
 import datetime
@@ -74,6 +75,7 @@ class VideosStore(SingletonBaseClass, MutableMapping):
         self._in_transaction = False
         self._videos = {}
         self._play_r_rated = True
+        self._muted = False
 
         self.load_data()
 
@@ -86,14 +88,35 @@ class VideosStore(SingletonBaseClass, MutableMapping):
                 if not video.path.exists():
                     del self[video]
 
-    @property
-    def play_r_rated(self):
-        return self._play_r_rated
+    async def call_amixer(self, value=None):
+        if value is None:
+            value = "mute" if self._muted else "unmute"
+
+        proc = await asyncio.create_subprocess_exec(
+            "amixer",
+            "set",
+            settings.ALSA_DEVICE,
+            value,
+            stderr=asyncio.subprocess.DEVNULL,
+            stdout=asyncio.subprocess.DEVNULL,
+        )
+        await proc.wait()
+
+    async def toggle_mute(self):
+        self._muted = not self._muted
+        self.save_data()
+        await self.call_amixer()
+        await self.app.state.player.set_state(muted=self._muted)
 
     async def toggle_play_r_rated(self):
         self._play_r_rated = not self._play_r_rated
         self.save_data()
-        await self.app.state.player.set_state(play_r_rated=self.play_r_rated)
+        await self.app.state.player.set_state(play_r_rated=self._play_r_rated)
+
+    async def startup(self):
+        await self.call_amixer("100%")  # Max out volume on start
+        await self.call_amixer()
+        await super().startup()
 
     async def watch_for_videos(self):
         async for changes in awatch(
@@ -106,7 +129,7 @@ class VideosStore(SingletonBaseClass, MutableMapping):
                     self.create(path)
                 elif change == WatchFilesChange.deleted and path in self:
                     del self[path]
-            await self.app.state.player.set_state(videos=self.as_json(), play_r_rated=self.play_r_rated)
+            await self.app.state.player.set_state(videos=self.as_json())
 
     @contextmanager
     def transaction(self):
@@ -124,12 +147,19 @@ class VideosStore(SingletonBaseClass, MutableMapping):
                 videos = (Video(**kwargs) for kwargs in data["videos"])
                 self._videos = {video.filename: video for video in videos}
                 self._play_r_rated = data["play_r_rated"]
+                self._muted = data["muted"]
             except Exception:
                 logger.exception("Error deserializing videos JSON file. Ignoring.")
 
     def save_data(self):
+        data = {
+            "play_r_rated": self._play_r_rated,
+            "muted": self._muted,
+            "videos": self.as_json(),
+        }
+
         with open(self.JSON_DB_PATH_TMP, "w") as file:
-            json.dump({"videos": self.as_json(), "play_r_rated": self.play_r_rated}, file, indent=2, sort_keys=True)
+            json.dump(data, file, indent=2, sort_keys=True)
             file.write("\n")
 
         # Atomic operation (write to temp file first)
@@ -196,6 +226,6 @@ class VideosStore(SingletonBaseClass, MutableMapping):
         return [v.as_dict() for v in self.values()]
 
     def random(self):
-        choices = [v for v in self._videos.values() if self.play_r_rated or not v.is_r_rated]
+        choices = [v for v in self._videos.values() if self._play_r_rated or not v.is_r_rated]
         if choices:
             return random.choice(choices)

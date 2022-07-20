@@ -47,8 +47,9 @@ class Player(SingletonBaseClass):
             "position": None,
             "duration": None,
             "playing": False,
-            "play_r_rated": self.videos.play_r_rated,
+            "play_r_rated": self.videos._play_r_rated,
             "paused": False,
+            "muted": self.videos._muted,
         }
 
     async def _kill(self, signal: int):
@@ -57,8 +58,8 @@ class Player(SingletonBaseClass):
             "-s",
             signal,
             *self.PLAYER_PROC_NAMES,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
         )
         await proc.wait()
 
@@ -268,7 +269,7 @@ class Player(SingletonBaseClass):
                     "--aspect-mode",
                     "stretch",
                     video.path,
-                    stdout=subprocess.DEVNULL,
+                    stdout=asyncio.subprocess.DEVNULL,
                 )
                 proc_start_time = time.time()
                 logger.info(f"player started: {video.filename}")
