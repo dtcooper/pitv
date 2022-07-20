@@ -22,11 +22,18 @@ def index(request):
     return RedirectResponse(settings.INDEX_REDIRECT_URL)
 
 
+def admins_only_command(method):
+    method.admin_only = True
+    return method
+
+
 class BackendEndpoint(WebSocketEndpoint):
-    PASSWORD_ACCEPTED = "PASSWORD_ACCEPTED"
+    PASSWORD_ACCEPTED_USER = "PASSWORD_ACCEPTED_USER"
+    PASSWORD_ACCEPTED_ADMIN = "PASSWORD_ACCEPTED_ADMIN"
     PASSWORD_DENIED = "PASSWORD_DENIED"
 
     authorized = False
+    is_admin = False
     encoding = "text"
 
     def __init__(self, *args, **kwargs):
@@ -51,6 +58,7 @@ class BackendEndpoint(WebSocketEndpoint):
     async def command_play_pause(self, _):
         await self.player.play_pause()
 
+    @admins_only_command
     async def command_update(self, kwargs):
         filename = kwargs.pop("filename")
         kwargs = {camel_to_underscore(k): v for k, v in kwargs.items()}
@@ -67,13 +75,15 @@ class BackendEndpoint(WebSocketEndpoint):
         await self.player.set_position(seconds)
 
     async def on_receive_unauthorized(self, websocket: WebSocket, text: str):
-        if verify_password(text):
-            self.authorized = True
+        is_user, self.is_admin = verify_password(text)
+        if is_user or self.is_admin:
             self.encoding = "json"
-            await websocket.send_text(self.PASSWORD_ACCEPTED)
+            await websocket.send_text(self.PASSWORD_ACCEPTED_ADMIN if self.is_admin else self.PASSWORD_ACCEPTED_USER)
             await self.player.set_state(authorize_websocket=websocket)
+            self.authorized = True
+
         else:
-            await asyncio.sleep(random.uniform(0.25, 1.25))
+            await asyncio.sleep(random.uniform(0.5, 2.0))
             await websocket.send_text(self.PASSWORD_DENIED)
 
     async def on_receive_authorized(self, websocket: WebSocket, data: dict):
@@ -81,13 +91,13 @@ class BackendEndpoint(WebSocketEndpoint):
             for command, value in data.items():
                 command = camel_to_underscore(command)
                 method = getattr(self, f"command_{command}", None)
-                if method is not None:
+                if method is not None and (not getattr(method, "admin_only", False) or self.is_admin):
                     if asyncio.iscoroutinefunction(method):
                         await method(value)
                     else:
                         method(value)
                 else:
-                    logger.warning(f"Invalid command: {command}")
+                    logger.warning(f"Invalid command (admin={self.is_admin}): {command}")
         else:
             logger.warning(f"Invalid JSON data: {data}")
 

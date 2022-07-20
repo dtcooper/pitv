@@ -75,9 +75,10 @@ async def auto_restart_coroutine(coro: typing.Coroutine, *args, **kwargs):
 
 
 def verify_password(password: str):
-    return hmac.compare_digest(
-        password.encode("utf-8"),
-        str(settings.PASSWORD).encode("utf-8"),
+    password_bytes = password.encode("utf-8")
+    return (
+        hmac.compare_digest(password_bytes, str(settings.PASSWORD_USER).encode("utf-8")),
+        hmac.compare_digest(password_bytes, str(settings.PASSWORD_ADMIN).encode("utf-8")),
     )
 
 
