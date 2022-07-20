@@ -57,7 +57,11 @@
           ></span>
         </span>
 
-        <button class="btn btn-xs btn-ghost btn-square" @click.stop="resetEdit(true)" x-show="!edit">
+        <button
+          class="btn btn-xs btn-ghost btn-square"
+          @click.stop="resetEdit(true)"
+          x-show="$store.conn.isAdmin && !edit"
+        >
           <span class="iconify h-6 w-6" data-icon="mdi:lead-pencil"></span>
         </button>
       </p>

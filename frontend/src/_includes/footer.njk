@@ -1,6 +1,7 @@
 <div class="btn-group flex justify-center">
   <button class="btn btn-ghost gap-2" @click="$store.player.togglePlayRRated()">
     <span class="underline">R</span> Rated Content:
+      {# TODO make this more clearly a button #}
       <span
         :class="$store.player.playRRated ? 'text-success' : 'text-error'"
         x-text="$store.player.playRRated ? 'ENABLED' : 'DISABLED'"

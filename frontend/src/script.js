@@ -92,6 +92,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('conn', {
     player: Alpine.store('player'),
     authorized: false,
+    isAdmin: false,
     badPassword: true,
     enterPassword: false,
     hasSocketOpenedBefore: false,
@@ -148,8 +149,9 @@ document.addEventListener('alpine:init', () => {
           console.log(message)
           this.connected = true
         } else {
-          if (message === 'PASSWORD_ACCEPTED') {
+          if (message === 'PASSWORD_ACCEPTED_USER' || message === 'PASSWORD_ACCEPTED_ADMIN') {
             this.authorized = true
+            this.isAdmin = message === 'PASSWORD_ACCEPTED_ADMIN'
             this.interstitialDescription = 'Initializing'
             this.interstitialAlertClass = 'alert-success'
           } else { // PASSWORD_DENIED
