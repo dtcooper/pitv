@@ -1,0 +1,42 @@
+<div x-data class="absolute inset-0 bg-base-100" x-show="$store.conn.shouldShowPowerOnWarning()" x-cloak>
+  <div class="modal modal-open">
+    <div class="modal-box w-screen max-w-screen-md">
+      <h3 class="flex items-center gap-6 font-bold text-lg justify-center">
+        <span class="iconify h-8 w-8 text-error" data-icon="mdi:power-standby"></span>
+        <u>Using the TV</u>
+        <span class="iconify h-8 w-8 text-error" data-icon="mdi:power-standby"></span>
+      </h3>
+      <p class="py-4 text-sm md:text-base">
+        To use this TV, do the following,
+        <ul class="list-disc list-outside text-sm md:text-base ml-7 md:ml-10 space-y-1 md:space-y-2">
+          <li>
+            Turn the
+            <span class="inline iconify h-5 w-5 md:h-7 md:w-7" data-icon="mdi:power-standby"></span>
+            power on. <em>(Top righthand button)</em>
+          </li>
+          <li>
+            Adjust
+            <span class="inline iconify h-5 w-5 md:h-7 md:w-7" data-icon="mdi:volume-high"></span>
+            volume to desired level.
+            <em>(Buttons second from the left)</em>
+          </li>
+          <li>
+            To avoid adult films,
+            <strong>
+              <span class="text-error">disable</span> <u>R</u> rated
+            </strong>
+            content at the bottom of the player.
+          </li>
+          <li>
+            If you see static, set TV to channel 4.
+          </li>
+        </ul>
+      </p>
+      <div class="modal-action">
+        <label for="my-modal" class="btn btn-lg btn-secondary italic" @click="$store.conn.showPowerOnWarning = false">
+          I got it!
+        </label>
+      </div>
+    </div>
+  </div>
+</div>

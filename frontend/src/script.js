@@ -84,6 +84,10 @@ document.addEventListener('alpine:init', () => {
       sendJSON({ togglePlayRRated: true })
     },
 
+    toggleMute () {
+      sendJSON({ toggleMute: true })
+    },
+
     playPause () {
       sendJSON({ playPause: true })
     }
@@ -101,12 +105,17 @@ document.addEventListener('alpine:init', () => {
     interstitialAlertClass: 'alert-info',
     socket: null,
     password: Alpine.$persist('').as('password'),
+    showPowerOnWarning: Alpine.$persist(true).as('showPowerOnWarning'),
     init () {
       const hash = new URLSearchParams(window.location.hash.substring(1))
       const hashPassword = hash.get('pw')
+
       if (hashPassword) {
         window.history.replaceState({}, document.title, '.') // Remove hash from URL
         this.password = hashPassword
+      }
+      if (hash.get('warn')) {
+        this.showPowerOnWarning = true
       }
 
       let websocketPrefix
@@ -162,6 +171,7 @@ document.addEventListener('alpine:init', () => {
         }
       }
     },
+
     login () {
       if (this.password) {
         this.interstitialDescription = 'Authorizing'
@@ -173,8 +183,13 @@ document.addEventListener('alpine:init', () => {
         this.focusPassword()
       }
     },
+
     focusPassword () {
       setTimeout(() => { document.getElementById('password-input').focus() }, 15)
+    },
+
+    shouldShowPowerOnWarning () {
+      return this.hasSocketOpenedBefore && this.showPowerOnWarning
     }
   })
 })

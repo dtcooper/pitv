@@ -31,7 +31,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/iconify/{{ ICONIFY_VERSION }}/iconify.min.js"></script>
 </head>
 <body class="h-screen-iphone-fix overflow-hidden">
-  <div x-data x-title="connect" x-show="!$store.conn.connected">
+  {% include "power_on_warning.njk" %}
+
+  <div x-data x-title="connect" x-show="!$store.conn.connected && !$store.conn.shouldShowPowerOnWarning()">
     {% include "connect.njk" %}
   </div>
 
@@ -39,7 +41,7 @@
     x-data
     x-title="app"
     class="flex flex-col h-screen-iphone-fix overflow-hidden max-w-screen-md mx-auto"
-    x-show="$store.conn.connected"
+    x-show="$store.conn.connected && !$store.conn.shouldShowPowerOnWarning()"
     x-cloak
   >
     {% include "player.njk" %}

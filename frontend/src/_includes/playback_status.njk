@@ -1,5 +1,5 @@
 <div
-  class="flex gap-2 justify-center items-center text-center font-bold text-base md:text-lg italic mb-1"
+  class="flex gap-2 justify-center items-center text-center font-bold text-base md:text-lg italic my-1"
   :class="{'animate-pulse': !$store.player.currentlyPlaying}"
 >
   <span x-text="$store.player.currentlyPlayingVideo('title') || 'Loading...'"></span>
@@ -28,12 +28,22 @@
     </div>
 
     {% if name === 'position' %}
-      <progress class="progress grow h-3 md:h-5" x-show="!$store.player.playing"></progress>
-      <progress
-        class="progress grow h-3 md:h-5 cursor-pointer hover:progress-secondary"
-        x-show="$store.player.playing" :value="$store.player.position" :max="$store.player.duration"
-        @click="(event) => $store.player.setPosition(event.offsetX / $el.clientWidth * $store.player.duration)"
-      ></progress>
+      {% set jsPosition %}event.offsetX / $el.clientWidth * $store.player.duration{% endset %}
+      <div
+        class="md:tooltip md:tooltip-secondary grow"
+        :data-tip="$store.player.playing ? $store.player.formatDuration(tooltipPosition) : 'Loading'"
+        @mousemove="(event) => {
+          tooltipPosition = $store.player.playing ? Math.round({{ jsPosition }}) : 0
+        }"
+        @click="(event) => $store.player.setPosition({{ jsPosition }})"
+        x-data="{'tooltipPosition': 0}"
+      >
+        <progress class="progress h-3 md:h-5" x-show="!$store.player.playing"></progress>
+        <progress
+          class="progress grow h-3 md:h-5 cursor-pointer hover:progress-secondary"
+          x-show="$store.player.playing" :value="$store.player.position" :max="$store.player.duration"
+        ></progress>
+      </div>
     {% endif %}
   {% endfor %}
 </div>
@@ -47,7 +57,7 @@
     @click="$store.player.playPause()"
   >
     <span
-      class="iconify h-6 w-6 h-8 w-8"
+      class="iconify h-7 w-7 md:h-8 md:w-8"
       :data-icon="$store.player.paused ? 'mdi:play' : 'mdi:pause'"
     ></span>
   </button>
@@ -66,10 +76,20 @@
       :disabled="!$store.player.playing"
       @click="$store.player.{{ command }}({{ amount }})"
     >
-      <span class="iconify h-8 w-8" data-icon="{{ icon }}"></span>
+      <span class="iconify h-7 w-7 md:h-8 md:w-8" data-icon="{{ icon }}"></span>
     </button>
   {% endfor %}
   <button class="btn btn-ghost" @click="$store.player.playRandom()">
-    <span class="iconify h-8 w-8" data-icon="mdi:shuffle-variant"></span>
+    <span class="iconify h-7 w-7 md:h-8 md:w-8" data-icon="mdi:shuffle-variant"></span>
+  </button>
+  <button
+    class="btn"
+    :class="$store.player.muted ? 'btn-error animate-pulse' : 'btn-ghost'"
+    @click="$store.player.toggleMute()"
+  >
+    <span
+      class="iconify h-7 w-7 md:h-8 md:w-8"
+      :data-icon="$store.player.muted ? 'mdi:volume-mute' : 'mdi:volume-high'"
+    ></span>
   </button>
 </div>
