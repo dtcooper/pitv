@@ -54,6 +54,7 @@
         <progress class="progress h-3 md:h-5" x-show="!$store.player.playing"></progress>
         <progress
           class="progress grow h-3 md:h-5 cursor-pointer hover:progress-secondary"
+          :class="$store.player.paused && 'progress-error animate-pulse'"
           x-show="$store.player.playing" :value="$store.player.position" :max="$store.player.duration"
         ></progress>
       </div>
