@@ -28,15 +28,19 @@
     </div>
 
     {% if name === 'position' %}
-      {% set jsPosition %}event.offsetX / $el.clientWidth * $store.player.duration{% endset %}
       <div
         class="md:tooltip md:tooltip-secondary grow"
-        :data-tip="$store.player.playing ? $store.player.formatDuration(tooltipPosition) : 'Loading'"
+        :data-tip="$store.player.playing ? `Go to ${$store.player.formatDuration(tooltipPosition)}` : 'Loading'"
         @mousemove="(event) => {
-          tooltipPosition = $store.player.playing ? Math.round({{ jsPosition }}) : 0
+          tooltipPosition = $store.player.playing ? Math.round(eventPosition(event)) : 0
         }"
-        @click="(event) => $store.player.setPosition({{ jsPosition }})"
-        x-data="{'tooltipPosition': 0}"
+        @click="(event) => $store.player.setPosition(eventPosition(event))"
+        x-data="{
+          tooltipPosition: 0,
+          eventPosition (event) {
+            return event.offsetX / $el.clientWidth * $store.player.duration
+          }
+        }"
       >
         <progress class="progress h-3 md:h-5" x-show="!$store.player.playing"></progress>
         <progress

@@ -1,5 +1,6 @@
 const process = require('process')
 const nunjucks = require('nunjucks')
+const htmlmin = require('html-minifier')
 const { execSync } = require('child_process')
 
 module.exports = (eleventyConfig) => {
@@ -32,6 +33,17 @@ module.exports = (eleventyConfig) => {
     }
     const jsonString = JSON.stringify(value, null, spaces).replace(/</g, '\\u003c')
     return nunjucks.runtime.markSafe(jsonString)
+  })
+
+  eleventyConfig.addTransform('htmlmin', function (content, outputPath) {
+    if (process.env.NODE_ENV === 'production' && outputPath && outputPath.endsWith('.html')) {
+      return htmlmin.minify(content, {
+        useShortDoctype: true,
+        removeComments: true,
+        collapseWhitespace: true
+      })
+    }
+    return content
   })
 
   return {
