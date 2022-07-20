@@ -106,8 +106,15 @@ document.addEventListener('alpine:init', () => {
     }
   })
 
+  Alpine.store('persist', {
+    // for some reason $persist doesn't work during conn.init(), so define these separately
+    password: Alpine.$persist('').as('password'),
+    showPowerOnWarning: Alpine.$persist(true).as('showPowerOnWarning')
+  })
+
   Alpine.store('conn', {
     player: Alpine.store('player'),
+    persist: Alpine.store('persist'),
     authorized: false,
     isAdmin: false,
     badPassword: true,
@@ -117,18 +124,17 @@ document.addEventListener('alpine:init', () => {
     interstitialDescription: 'Connecting',
     interstitialAlertClass: 'alert-info',
     socket: null,
-    password: Alpine.$persist('').as('password'),
-    showPowerOnWarning: Alpine.$persist(true).as('showPowerOnWarning'),
     init () {
+      setTimeout(() => this.checkHash(), 5)
       const hash = new URLSearchParams(window.location.hash.substring(1))
       const hashPassword = hash.get('pw')
 
       if (hashPassword) {
         window.history.replaceState({}, document.title, '.') // Remove hash from URL
-        this.password = hashPassword
+        this.persist.password = hashPassword
       }
       if (hash.get('warn')) {
-        this.showPowerOnWarning = true
+        this.persist.showPowerOnWarning = true
       }
 
       let websocketPrefix
@@ -142,7 +148,7 @@ document.addEventListener('alpine:init', () => {
       socket.onopen = () => {
         this.badPassword = this.authorized = this.connected = false
         this.hasSocketOpenedBefore = true
-        if (this.password) {
+        if (this.persist.password) {
           this.login()
         } else {
           this.enterPassword = true
@@ -178,19 +184,24 @@ document.addEventListener('alpine:init', () => {
             this.interstitialAlertClass = 'alert-success'
           } else { // PASSWORD_DENIED
             this.badPassword = this.enterPassword = true
-            this.password = ''
+            this.persist.password = ''
             this.focusPassword()
           }
         }
       }
     },
 
+    checkHash () {
+
+    },
+
     login () {
-      if (this.password) {
+      if (this.persist.password) {
+        console.log(`Attempting to login with ${this.persist.password}`)
         this.interstitialDescription = 'Authorizing'
         this.interstitialAlertClass = 'alert-info'
         this.enterPassword = false
-        socket.send(this.password)
+        socket.send(this.persist.password)
       } else {
         this.badPassword = true
         this.focusPassword()
@@ -202,7 +213,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     shouldShowPowerOnWarning () {
-      return this.hasSocketOpenedBefore && this.showPowerOnWarning
+      return this.hasSocketOpenedBefore && this.persist.showPowerOnWarning
     }
   })
 })

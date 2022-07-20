@@ -96,11 +96,6 @@
       </button>
     </div>
   {% endfor %}
-  <div class="md:tooltip md:tooltip-bottom" data-tip="Shuffle (play random)">
-    <button class="btn btn-ghost" @click="$store.player.playRandom()">
-      <span class="iconify h-7 w-7 md:h-8 md:w-8" data-icon="mdi:shuffle-variant"></span>
-    </button>
-  </div>
   <div class="md:tooltip md:tooltip-bottom" :data-tip="$store.player.muted ? 'Unmute' : 'Mute'">
     <button
       class="btn"
@@ -111,6 +106,11 @@
         class="iconify h-7 w-7 md:h-8 md:w-8"
         :data-icon="$store.player.muted ? 'mdi:volume-mute' : 'mdi:volume-high'"
       ></span>
+    </button>
+  </div>
+  <div class="md:tooltip md:tooltip-bottom" data-tip="Shuffle (play random)">
+    <button class="btn btn-ghost" @click="$store.player.playRandom()">
+      <span class="iconify h-7 w-7 md:h-8 md:w-8" data-icon="mdi:shuffle-variant"></span>
     </button>
   </div>
 </div>
