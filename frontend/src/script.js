@@ -26,6 +26,19 @@ document.addEventListener('alpine:init', () => {
     playing: null,
     playRRated: null,
 
+    init () {
+      Alpine.effect(() => this.scrollToCurrentlyPlaying())
+    },
+
+    scrollToCurrentlyPlaying () {
+      if (this.currentlyPlaying !== null) {
+        const elem = document.getElementById(`playlist-item-${this.currentlyPlaying}`)
+        if (elem) {
+          setTimeout(() => elem.scrollIntoView({ behavior: 'smooth', block: 'center' }), 25)
+        }
+      }
+    },
+
     currentlyPlayingVideo (attr = null) {
       if (this.currentlyPlaying !== null) {
         for (const video of (this.videos || [])) {

@@ -33,7 +33,14 @@
         </ul>
       </p>
       <div class="modal-action">
-        <label for="my-modal" class="btn btn-lg btn-secondary italic" @click="$store.conn.showPowerOnWarning = false">
+        <label
+          for="my-modal"
+          class="btn btn-lg btn-secondary italic"
+          @click="
+            $store.conn.showPowerOnWarning = false
+            $store.player.scrollToCurrentlyPlaying()
+          "
+        >
           I got it!
         </label>
       </div>
