@@ -1,0 +1,21 @@
+<div class="toast toast-top toast-center items-center z-[9999]" x-data x-show="$store.notify.alerts.length > 0">
+  <template x-for="alert in [...$store.notify.alerts].reverse()" :key="alert.id">
+    <div
+      class="alert w-fit"
+      :class="{
+          'alert-info': alert.level === 'info',
+          'alert-success': alert.level === 'success',
+          'alert-warning': alert.level === 'warning',
+          'alert-error': alert.level === 'error'
+      }"
+    >
+      <div>
+        <span
+          class="iconify h-8 w-8"
+          :data-icon="$store.notify.icon(alert.level)"
+        ></span>
+        <span class="italic" x-text="alert.message"></span>
+      </div>
+    </div>
+  </template>
+</div>

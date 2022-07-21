@@ -1,7 +1,7 @@
 <div class="flex flex-col flex-1">
   <template
-    x-for="(video, index) in $store.player.videos"
-    :key="`${video.title}:${video.description}:${video.isRRated}:${video.duration}`"
+    x-for="video in $store.player.videos"
+    :key="`${video.title}:${video.description}:${video.isRRated}:${video.image}:${video.duration}`"
   >
     <div
       class="odd:bg-base-200 px-2 py-2"
@@ -19,11 +19,11 @@
         @click.stop="if (!isPlaying() && !isRRatedDisabled()) { $store.player.play(video.path) }"
         :class="{'cursor-pointer': !isPlaying() && !isRRatedDisabled()}"
       >
+        <img x-show="video.image" class="max-w-24 max-h-24 border border-accent row-span-2 mr-2" :src="video.image">
         <span
           class="grow flex items-center gap-1.5 md:gap-2 text-sm md:text-base pr-2.5"
           :class="{'text-gray-400': !isPlaying() && isRRatedDisabled()}"
         >
-          <span class="italic font-bold" x-text="`${index + 1}.`"></span>
           <span class="italic font-bold grow" x-text="video.title"></span>
           <span x-show="video.isRRated" class="badge badge-sm md:badge-md badge-error">R</span>
           <span
@@ -33,13 +33,18 @@
           ></span>
         </span>
 
-        <button
-          class="btn btn-xs btn-ghost btn-square"
-          @click.stop="resetEdit(true)"
+        <span
+          class="md:tooltip md:tooltip-left"
+          data-tip="Edit this video"
           x-show="$store.conn.isAdmin && !edit"
         >
-          <span class="iconify h-6 w-6" data-icon="mdi:lead-pencil"></span>
-        </button>
+          <button
+            class="btn btn-xs btn-ghost btn-square"
+            @click.stop="resetEdit(true)"
+          >
+            <span class="iconify h-6 w-6" data-icon="mdi:lead-pencil"></span>
+          </button>
+        </span>
       </p>
       <p
         class="mt-1 text-sm"
@@ -48,44 +53,7 @@
         x-text="video.description"
       ></p>
 
-      <div x-show="edit">
-        <div class="form-control">
-          <label class="label gap-2">
-            <span class="label-text font-bold">Path:</span>
-            <input type="input" class="input input-sm md:input-md input-primary grow" disabled :value="video.path">
-          </label>
-        </div>
-
-        <div class="form-control">
-          <label class="label cursor-pointer gap-2">
-            <span class="label-text font-bold">Title:</span>
-            <input type="input" class="input input-sm md:input-md input-primary grow" x-model="titleEdit">
-          </label>
-        </div>
-
-        <div class="form-control">
-          <label class="label flex-col cursor-pointer items-start gap-2">
-            <span class="label-text font-bold">Description:</span>
-            <textarea
-              class="textarea textarea-sm md:textarea-md textarea-primary h-24 md:h-40 self-stretch"
-              x-model="descriptionEdit"
-              placeholder="Enter a description or leave empty..."
-            ></textarea>
-          </label>
-        </div>
-
-        <div class="form-control">
-          <label class="label self-start cursor-pointer justify-start gap-3">
-            <span class="label-text font-bold">Is Rated <span class="underline">R</span>?</span>
-            <input type="checkbox" checked="checked" class="checkbox checkbox-primary" x-model="isRRatedEdit">
-          </label>
-        </div>
-
-        <div class="flex justify-center gap-1 mt-2">
-          <button class="btn btn-success" @click.stop="update()">Save</button>
-          <button class="btn btn-error" @click.stop="resetEdit(false)">Discard</button>
-        </div>
-      </div>
+      {% include "playlist_editor.njk" %}
     </div>
   </template>
 </div>

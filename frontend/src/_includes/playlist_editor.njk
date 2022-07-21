@@ -1,0 +1,105 @@
+<div
+  class="modal modal-open"
+  x-show="currentImdbVideo() && edit"
+  x-title="imdb-modal"
+  x-data="imdbModal(video)"
+>
+  <div class="modal-box w-screen max-w-screen-md px-4å">
+    <h3 class="flex items-center gap-6 font-bold text-lg justify-center">
+      <span class="iconify h-8 w-8 text-error" data-icon="mdi:play-box-multiple"></span>
+      <u>IMDb Search Results</u>
+      <span class="iconify h-8 w-8 text-error" data-icon="mdi:play-box-multiple"></span>
+    </h3>
+    <div class="py-4 gap-x-3 gap-y-2 grid grid-cols-[min-content_min-content_auto] text-sm md:text-base">
+      {% for columnName in ['Use', 'Field', 'Value from IMDb'] %}
+        <div class="font-bold underline italic{% if not loop.last %} text-center{% endif %}">{{ columnName }}</div>
+      {% endfor %}
+
+      <div class="font-bold flex items-baseline justify-end col-span-2">Year:</div>
+      <div class="flex items-baseline" x-text="value('year', 'unknown')"></div>
+
+      {% for field in ['title', 'description'] %}
+        <div class="form-control">
+            <input class="checkbox checkbox-secondary" type="checkbox" x-model="use{{ field|title }}">
+        </div>
+        <div class="font-bold flex items-baseline justify-end">{{ field|title }}:</div>
+        {# TODO attrjs filter #}
+        <div class="flex items-baseline" x-text="value('{{ field }}', 'Not found')"></div>
+      {% endfor %}
+        <div class="form-control">
+            <input class="checkbox checkbox-secondary" type="checkbox" x-model="useImage" :disabled="!value('image')">
+        </div>
+        <div class="font-bold flex items-baseline justify-end">Image:</div>
+        <img class="max-h-36 md:max-h-56" x-show="value('image')" :src="value('image')">
+        <span class="flex items-baseline italic" x-show="!value('image')">None</span>
+    </div>
+    <div class="py-4 flex items-center justify-between">
+      <button class="btn justify-self-start" :disabled="!hasPrev()" @click="index -= 1">Previous</button>
+      <span class="italic" x-text="`Result ${index + 1} of ${$store.player.imdb.results.length}`"></span>
+      <button class="btn justify-self-end" :disabled="!hasNext()" @click="index += 1">Next</button>
+    </div>
+    <div class="modal-action">
+      <label class="btn btn-error" @click="reset()">
+        Cancel
+      </label>
+      <label class="btn btn-success" @click="done()">
+        Use Checked Values
+      </label>
+    </div>
+  </div>
+</div>
+
+<div x-show="edit" x-collapse>
+  <div class="form-control">
+    <label class="label gap-2">
+      <span class="label-text font-bold">Path:</span>
+      <input type="input" class="input input-sm md:input-md input-primary grow" disabled :value="video.path">
+    </label>
+  </div>
+
+  <div class="form-control">
+    <label class="label cursor-pointer gap-2">
+      <span class="label-text font-bold">Title:</span>
+      <input type="input" class="input input-sm md:input-md input-primary grow" x-model="titleEdit">
+    </label>
+  </div>
+
+  <div class="form-control">
+    <label class="label flex-col cursor-pointer items-start gap-2">
+      <span class="label-text font-bold">Description:</span>
+      <textarea
+        class="textarea textarea-sm md:textarea-md textarea-primary h-24 md:h-40 self-stretch"
+        x-model="descriptionEdit"
+        placeholder="Enter a description or leave empty..."
+      ></textarea>
+    </label>
+  </div>
+
+  <div class="form-control">
+    <label class="label cursor-pointer gap-2">
+      <span class="label-text font-bold">Image URL:</span>
+      <input type="input" class="input input-sm md:input-md input-primary grow" x-model="imageEdit">
+    </label>
+  </div>
+
+  <div class="form-control">
+    <label class="label self-start cursor-pointer justify-start gap-3">
+      <span class="label-text font-bold">Is Rated <span class="underline">R</span>?</span>
+      <input type="checkbox" checked="checked" class="checkbox checkbox-primary" x-model="isRRatedEdit">
+    </label>
+  </div>
+
+  <div class="flex justify-center gap-1 mt-2">
+    <button class="btn btn-success" @click.stop="update()">Save</button>
+    <button class="btn btn-error" @click.stop="resetEdit(false)">Discard</button>
+    <div class="md:tooltip md:tooltip-top" data-tip="Use title to search IMDb">
+      <button
+        class="btn btn-info"
+        @click="$store.player.searchImdb(video.path, titleEdit)"
+        :disabled="$store.player.imdb.working"
+      >
+        Fill in from IMDb
+      </button>
+    </div>
+  </div>
+</div>

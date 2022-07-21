@@ -38,7 +38,7 @@
 
     {% if name === 'position' %}
       <div
-        class="md:tooltip md:tooltip-secondary grow"
+        class="md:tooltip md:tooltip-bottom md:tooltip-secondary grow z-10"
         :data-tip="$store.player.playing ? `Go to ${$store.player.formatDuration(tooltipPosition)}` : 'Loading'"
         @mousemove="(event) => {
           tooltipPosition = $store.player.playing ? Math.round(eventPosition(event)) : 0

@@ -1,11 +1,11 @@
 /* global DATA */
 
-// Needed until https://github.com/alpinejs/alpine/pull/2968 is released
-
-import Alpine from 'alpinejs/src'
-import persist from '@alpinejs/persist/src'
+import Alpine from 'alpinejs'
+import persist from '@alpinejs/persist'
+import collapse from '@alpinejs/collapse'
 import ReconnectingWebSocket from 'reconnecting-websocket'
 
+Alpine.plugin(collapse)
 Alpine.plugin(persist)
 window.Alpine = Alpine
 
@@ -16,7 +16,37 @@ document.addEventListener('alpine:init', () => {
     socket.send(JSON.stringify(data))
   }
 
+  Alpine.store('notify', {
+    alerts: [],
+    id: 0,
+    show (message, level = 'info', timeout = 5000) {
+      if (!['info', 'success', 'warning', 'error'].includes(level)) {
+        level = 'info'
+      }
+      const id = this.id++
+      this.alerts.push({ message, level, id })
+      setTimeout(() => { this.alerts = this.alerts.filter(value => value.id !== id) }, timeout)
+    },
+    icon (level) {
+      switch (level) {
+        case 'success':
+          return 'mdi:check-circle'
+        case 'warning':
+          return 'mdi:alert'
+        case 'error':
+          return 'mdi:alert-octagon'
+        default:
+          return 'mdi:information'
+      }
+    }
+  })
+
   Alpine.store('player', {
+    imdb: {
+      path: null,
+      working: false,
+      results: []
+    },
     /* Copied from backend/api/player.py:Player._state */
     videos: null,
     currentlyPlaying: null,
@@ -32,10 +62,14 @@ document.addEventListener('alpine:init', () => {
 
     scrollToCurrentlyPlaying () {
       if (this.currentlyPlaying !== null) {
-        const elem = document.getElementById(`playlist-item-${this.currentlyPlaying}`)
-        if (elem) {
-          setTimeout(() => elem.scrollIntoView({ behavior: 'smooth', block: 'center' }), 25)
-        }
+        this.scrollToVideo(this.currentlyPlaying)
+      }
+    },
+
+    scrollToVideo (path, block = 'center', delay = 25) {
+      const elem = document.getElementById(`playlist-item-${path}`)
+      if (elem) {
+        setTimeout(() => elem.scrollIntoView({ behavior: 'smooth', block }), delay)
       }
     },
 
@@ -103,6 +137,11 @@ document.addEventListener('alpine:init', () => {
 
     playPause () {
       sendJSON({ playPause: true })
+    },
+
+    searchImdb (path, title) {
+      this.imdb.working = true
+      sendJSON({ searchImdb: [path, title] })
     }
   })
 
@@ -113,8 +152,9 @@ document.addEventListener('alpine:init', () => {
   })
 
   Alpine.store('conn', {
-    player: Alpine.store('player'),
+    notify: Alpine.store('notify'),
     persist: Alpine.store('persist'),
+    player: Alpine.store('player'),
     authorized: false,
     isAdmin: false,
     badPassword: true,
@@ -125,7 +165,6 @@ document.addEventListener('alpine:init', () => {
     interstitialAlertClass: 'alert-info',
     socket: null,
     init () {
-      setTimeout(() => this.checkHash(), 5)
       const hash = new URLSearchParams(window.location.hash.substring(1))
       const hashPassword = hash.get('pw')
 
@@ -172,9 +211,13 @@ document.addEventListener('alpine:init', () => {
         if (this.authorized) {
           message = JSON.parse(message)
           for (const key in message) {
-            this.player[key] = message[key]
+            const value = message[key]
+            if (key === 'notify') {
+              this.notify.show(value.message, value.level || undefined, value.timeout || undefined)
+            } else {
+              this.player[key] = value
+            }
           }
-          console.log(message)
           this.connected = true
         } else {
           if (message === 'PASSWORD_ACCEPTED_USER' || message === 'PASSWORD_ACCEPTED_ADMIN') {
@@ -191,13 +234,8 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    checkHash () {
-
-    },
-
     login () {
       if (this.persist.password) {
-        console.log(`Attempting to login with ${this.persist.password}`)
         this.interstitialDescription = 'Authorizing'
         this.interstitialAlertClass = 'alert-info'
         this.enterPassword = false
@@ -223,6 +261,7 @@ Alpine.data('playlistItem', (video) => ({
   edit: false,
   titleEdit: '',
   descriptionEdit: '',
+  imageEdit: '',
   isRRatedEdit: false,
 
   isPlaying () {
@@ -236,14 +275,69 @@ Alpine.data('playlistItem', (video) => ({
     this.titleEdit = video.title
     this.descriptionEdit = video.description
     this.isRRatedEdit = video.isRRated
+    this.imageEdit = video.image
+    if (edit) {
+      this.player.scrollToVideo(video.path, 'start', 200)
+    }
   },
   update () {
     this.player.update(video.path, {
       title: this.titleEdit || video.title,
       description: this.descriptionEdit,
-      isRRated: this.isRRatedEdit
+      isRRated: this.isRRatedEdit,
+      image: this.imageEdit
     })
     this.edit = false
+  }
+}))
+
+Alpine.data('imdbModal', (video) => ({
+  player: Alpine.store('player'),
+  index: 0,
+  useTitle: true,
+  useDescription: true,
+  useImage: true,
+  reset () {
+    this.index = 0
+    this.useTitle = this.useDescription = this.useImage = true
+    this.player.imdb.path = null
+  },
+  currentImdbVideo () {
+    if (this.player.imdb.path === video.path) {
+      if (this.index < this.player.imdb.results.length) {
+        return this.player.imdb.results[this.index]
+      }
+    }
+    return null
+  },
+  value (key, defaultValue = null) {
+    const video = this.currentImdbVideo()
+    if (video) {
+      const value = video[key]
+      return value === null ? defaultValue : value
+    }
+    return defaultValue
+  },
+  hasNext () {
+    return this.index < (this.player.imdb.results.length - 1)
+  },
+  hasPrev () {
+    return this.index > 0
+  },
+  done () {
+    const title = this.value('title')
+    const description = this.value('description')
+    const image = this.value('image')
+    if (this.useTitle) {
+      this.titleEdit = title
+    }
+    if (this.useDescription && description) {
+      this.descriptionEdit = description
+    }
+    if (this.useImage && image) {
+      this.imageEdit = image
+    }
+    this.reset()
   }
 }))
 

@@ -31,6 +31,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/iconify/{{ ICONIFY_VERSION }}/iconify.min.js"></script>
 </head>
 <body class="h-screen-iphone-fix overflow-hidden">
+  {% include "notify.njk" %}
+
   <div x-data class="absolute inset-0 bg-base-100" x-show="$store.conn.connected && $store.conn.shouldShowPowerOnWarning()" x-cloak>
     {% include "power_on_warning.njk" %}
   </div>
