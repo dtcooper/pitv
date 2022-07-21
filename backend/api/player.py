@@ -266,8 +266,9 @@ class Player(SingletonBaseClass):
             if video is not None:
                 proc = await asyncio.create_subprocess_exec(
                     self.PLAYER_PATH,
-                    "-s",
                     "--no-osd",
+                    "--adev",
+                    "alsa",
                     "--aspect-mode",
                     "stretch",
                     video.path,
