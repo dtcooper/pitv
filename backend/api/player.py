@@ -11,7 +11,7 @@ from dbus_next import Message as DBusMessage, MessageType as DBusMessageType
 from dbus_next.aio import MessageBus as DBusMessageBus
 
 from . import settings
-from .util import convert_to_camel, SingletonBaseClass
+from .util import convert_obj_to_camel, SingletonBaseClass
 from .videos import VideosStore
 
 
@@ -170,7 +170,7 @@ class Player(SingletonBaseClass):
             message = self._state  # Send entire state
 
         if message:
-            message = convert_to_camel(message)
+            message = convert_obj_to_camel(message)
             for websocket in websockets:
                 try:
                     await websocket.send_json(message)

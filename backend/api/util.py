@@ -7,6 +7,7 @@ import sys
 import time
 import typing
 
+import imdb
 from uvicorn.logging import ColourizedFormatter
 
 from . import settings
@@ -15,6 +16,7 @@ from . import settings
 AUTO_RESTART_SLEEP_TIME = 2.5
 AUTO_RESTART_MIN_TRIES = 5
 AUTO_RESTART_AVERAGE_COROUTINE_FAIL_TIME_BEFORE_EXIT = 15
+IMDB_INVALID_IMAGES = {"https://m.media-amazon.png"}
 UPPERCASE_RE = re.compile(r"(?<!^)(?=[A-Z])")
 
 
@@ -90,13 +92,41 @@ def camel_to_underscore(s):
     return UPPERCASE_RE.sub("_", s).lower()
 
 
-def convert_to_camel(obj):
+def convert_obj_to_camel(obj):
     if isinstance(obj, dict):
-        return {underscore_to_camel(k): convert_to_camel(v) for k, v in obj.items()}
+        return {underscore_to_camel(k): convert_obj_to_camel(v) for k, v in obj.items()}
     elif isinstance(obj, (tuple, list)):
-        return list(map(convert_to_camel, obj))
+        return list(map(convert_obj_to_camel, obj))
     else:
         return obj
+
+
+def search_imdb_blocking(title):
+    api = imdb.Cinemagoer()
+    results = []
+    for movie in api.search_movie_advanced(title, adult=True):
+        if (title := movie.get("title")) is not None:
+            for image_key in ("full-size cover url", "cover url"):
+                image = movie.get(image_key)
+                if image is not None and image not in IMDB_INVALID_IMAGES:
+                    break
+                image = None
+
+            results.append(
+                {
+                    "title": title,
+                    "year": movie.get("year"),
+                    "description": movie.get("plot"),
+                    "image": image,
+                }
+            )
+    return results
+
+
+async def search_imdb(title):
+    loop = asyncio.get_running_loop()
+    results = await loop.run_in_executor(None, search_imdb_blocking, title)
+    return results
 
 
 def init_pkg_logger():

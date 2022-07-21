@@ -31,7 +31,7 @@ def convert_arg_to_filename(func):
 
 
 class Video:
-    def __init__(self, path, title=None, duration=0, description=None, is_r_rated=False):
+    def __init__(self, path, title=None, duration=0, description=None, is_r_rated=False, image=None):
         if isinstance(path, str):
             path = settings.VIDEOS_DIR / path
 
@@ -46,6 +46,7 @@ class Video:
         self.description = description
         self.is_r_rated = is_r_rated
         self.duration = duration
+        self.image = None
 
     @property
     def filename(self):
@@ -67,7 +68,7 @@ class VideosStore(SingletonBaseClass, MutableMapping):
     JSON_DB_PATH = settings.VIDEOS_DIR / ".videos.json"
     JSON_DB_PATH_TMP = JSON_DB_PATH.parent / f"{JSON_DB_PATH.stem}.tmp.json"
     JSON_DATA_FILES = {JSON_DB_PATH, JSON_DB_PATH_TMP}
-    EDITABLE_ATTRS = ("title", "description", "is_r_rated")
+    EDITABLE_ATTRS = ("title", "description", "is_r_rated", "image")
 
     def __init__(self, app):
         super().__init__(app)

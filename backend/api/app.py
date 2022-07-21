@@ -11,7 +11,7 @@ from starlette.websockets import WebSocket
 
 from . import settings
 from .player import Player
-from .util import camel_to_underscore, init_pkg_logger, verify_password
+from .util import camel_to_underscore, convert_obj_to_camel, init_pkg_logger, search_imdb, verify_password
 from .videos import VideosStore
 
 
@@ -23,7 +23,12 @@ def index(request):
 
 
 def admins_only_command(method):
-    method.admin_only = True
+    method._admin_only = True
+    return method
+
+
+def wants_websocket_command(method):
+    method._wants_websocket = True
     return method
 
 
@@ -39,7 +44,6 @@ class BackendEndpoint(WebSocketEndpoint):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         app: Starlette = self.scope["app"]
-        self.authorized_websockets: weakref.WeakSet = app.state.authorized_websockets
         self.player: Player = app.state.player
         self.videos: VideosStore = app.state.videos
 
@@ -71,6 +75,16 @@ class BackendEndpoint(WebSocketEndpoint):
                 return
         await self.videos.update_video(filename, **kwargs)
 
+    @admins_only_command
+    @wants_websocket_command
+    async def command_search_imdb(self, websocket: WebSocket, path_title):
+        path, title = path_title
+        results = await search_imdb(title)
+        response = {"imdb": {"path": path, "results": results, "working": False}}
+        if not results:
+            response["notify"] = {"message": "No results on IMDb found!", "level": "error"}
+        await websocket.send_json(convert_obj_to_camel(response))
+
     async def command_seek(self, seconds):
         await self.player.seek(seconds)
 
@@ -94,11 +108,12 @@ class BackendEndpoint(WebSocketEndpoint):
             for command, value in data.items():
                 command = camel_to_underscore(command)
                 method = getattr(self, f"command_{command}", None)
-                if method is not None and (not getattr(method, "admin_only", False) or self.is_admin):
+                if method is not None and (not getattr(method, "_admin_only", False) or self.is_admin):
+                    args = (websocket, value) if getattr(method, "_wants_websocket", False) else (value,)
                     if asyncio.iscoroutinefunction(method):
-                        await method(value)
+                        await method(*args)
                     else:
-                        method(value)
+                        method(*args)
                 else:
                     logger.warning(f"Invalid command (admin={self.is_admin}): {command}")
         else:
