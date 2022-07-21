@@ -42,8 +42,8 @@
       <label class="btn btn-error" @click="reset()">
         Cancel
       </label>
-      <label class="btn btn-success" @click="done()">
-        Use Checked Values
+      <label class="btn btn-secondary" @click="done()">
+        Prefill With Selected Values
       </label>
     </div>
   </div>
@@ -90,16 +90,14 @@
   </div>
 
   <div class="flex justify-center gap-1 mt-2">
+    <button
+      class="btn btn-info"
+      @click="$store.player.searchImdb(video.path, titleEdit)"
+      :disabled="$store.player.imdb.working"
+    >
+      Fill in from IMDb
+    </button>
+    <button class="btn btn-error" @click.stop="resetEdit(false)">Cancel</button>
     <button class="btn btn-success" @click.stop="update()">Save</button>
-    <button class="btn btn-error" @click.stop="resetEdit(false)">Discard</button>
-    <div class="md:tooltip md:tooltip-top" data-tip="Use title to search IMDb">
-      <button
-        class="btn btn-info"
-        @click="$store.player.searchImdb(video.path, titleEdit)"
-        :disabled="$store.player.imdb.working"
-      >
-        Fill in from IMDb
-      </button>
-    </div>
   </div>
 </div>

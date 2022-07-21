@@ -1,14 +1,9 @@
 <div class="btn-group flex justify-center">
-  <div
-    class="md:tooltip md:tooltip-top md:tooltip-accent"
-    :data-tip="`Click to ${$store.player.playRRated ? 'disable' : 'enable'} adult content`"
-  >
-    <button class="btn gap-2" @click="$store.player.togglePlayRRated()">
-      <span class="underline">R</span> Rated Content:
-        <span
-          :class="$store.player.playRRated ? 'text-success' : 'text-error'"
-          x-text="$store.player.playRRated ? 'ENABLED' : 'DISABLED'"
-        ></span>
-    </button>
-  </div>
+  <button class="btn gap-2" @click="$store.player.togglePlayRRated()">
+    <span class="underline">R</span> Rated Content:
+      <span
+        :class="$store.player.playRRated ? 'text-success' : 'text-error'"
+        x-text="$store.player.playRRated ? 'ENABLED' : 'DISABLED'"
+      ></span>
+  </button>
 </div>

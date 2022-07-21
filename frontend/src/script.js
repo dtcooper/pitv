@@ -258,12 +258,25 @@ document.addEventListener('alpine:init', () => {
 
 Alpine.data('playlistItem', (video) => ({
   player: Alpine.store('player'),
+  requested: false,
   edit: false,
+  expanded: false,
   titleEdit: '',
   descriptionEdit: '',
   imageEdit: '',
   isRRatedEdit: false,
-
+  init () {
+    // When player starts playing, disabled requested UI highlight
+    this.$watch('player.playing', (value) => {
+      if (value) {
+        this.requested = false // XXX uncomment
+      }
+    })
+  },
+  play () {
+    this.requested = true
+    this.player.play(video.path)
+  },
   isPlaying () {
     return this.player.currentlyPlaying === video.path
   },
@@ -271,6 +284,7 @@ Alpine.data('playlistItem', (video) => ({
     return video.isRRated && !this.player.playRRated
   },
   resetEdit (edit = true) {
+    this.expanded = false
     this.edit = edit
     this.titleEdit = video.title
     this.descriptionEdit = video.description

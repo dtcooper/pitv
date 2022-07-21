@@ -12,33 +12,25 @@
   x-data="{duration: $persist(true).as('playerShowDuration')}"
 >
   {% for name in ['position', 'duration', 'timeleft'] %}
-    {% if name !== 'position'%}
-      <div
-        class="md:tooltip md:tooltip-left"
-        data-tip="Switch to {% if name == 'duration'%}duration{% else %}time left{% endif %}"
-        x-show="{% if name === 'timeleft' %}!{% endif %}duration"
-      >
-    {% endif %}
-        <div
-          class="flex{% if name !== 'position' %} cursor-pointer hover:text-secondary{% endif %}"
-          {% if name === 'position' %}
-            :class="{'text-error animate-pulse': $store.player.paused}"
-          {% else %}
-            @click="duration = !duration"
-          {% endif %}
-        >
-          {% if name === 'timeleft' %}
-            <span>-</span>
-          {% endif %}
-          <span x-text="$store.player.pretty{{ name|title }}()"></span>
-        </div>
-    {% if name !== 'position' %}
-      </div>
-    {% endif %}
+    <div
+      class="!flex{% if name !== 'position' %} cursor-pointer hover:text-secondary md:tooltip md:tooltip-left md:tooltip-secondary z-20{% endif %}"
+      {% if name === 'position' %}
+        :class="{'text-error animate-pulse': $store.player.paused}"
+      {% else %}
+        x-show.important="{% if name === 'timeleft' %}!{% endif %}duration"
+        @click="duration = !duration"
+        data-tip="Switch to {% if name === 'timeleft' %}duration{% else %}time left {% endif %}"
+      {% endif %}
+    >
+      {% if name === 'timeleft' %}
+        <span>-</span>
+      {% endif %}
+      <span x-text="$store.player.pretty{{ name|title }}()"></span>
+    </div>
 
     {% if name === 'position' %}
       <div
-        class="md:tooltip md:tooltip-bottom md:tooltip-secondary grow z-10"
+        class="!flex md:tooltip md:tooltip-bottom md:tooltip-secondary z-10 grow"
         :data-tip="$store.player.playing ? `Go to ${$store.player.formatDuration(tooltipPosition)}` : 'Loading'"
         @mousemove="(event) => {
           tooltipPosition = $store.player.playing ? Math.round(eventPosition(event)) : 0

@@ -1,6 +1,6 @@
 <div class="flex flex-col flex-1">
   <template
-    x-for="video in $store.player.videos"
+    x-for="(video, index) in $store.player.videos"
     :key="`${video.title}:${video.description}:${video.isRRated}:${video.image}:${video.duration}`"
   >
     <div
@@ -8,23 +8,23 @@
       x-data="playlistItem(video)"
       :id="`playlist-item-${video.path}`"
       :class="{
-          '!bg-secondary': isPlaying(),
+          '!bg-secondary': isPlaying() || requested,
+          'animate-pulse': requested,
           'hover:bg-base-300': !isPlaying() && !isRRatedDisabled(),
           'cursor-pointer': !edit && !isPlaying() && !isRRatedDisabled()
       }"
-      @click="if (!edit && !isPlaying() && !isRRatedDisabled()) { $store.player.play(video.path) }"
+      @click="if (!edit && !isPlaying() && !isRRatedDisabled()) { play() }"
     >
       <p
         class="flex items-center"
-        @click.stop="if (!isPlaying() && !isRRatedDisabled()) { $store.player.play(video.path) }"
+        @click.stop="if (!isPlaying() && !isRRatedDisabled()) { play() }"
         :class="{'cursor-pointer': !isPlaying() && !isRRatedDisabled()}"
       >
-        <img x-show="video.image" class="max-w-24 max-h-24 border border-accent row-span-2 mr-2" :src="video.image">
         <span
           class="grow flex items-center gap-1.5 md:gap-2 text-sm md:text-base pr-2.5"
           :class="{'text-gray-400': !isPlaying() && isRRatedDisabled()}"
         >
-          <span class="italic font-bold grow" x-text="video.title"></span>
+          <span class="italic font-bold grow" x-text="`${index + 1}. ${video.title}`"></span>
           <span x-show="video.isRRated" class="badge badge-sm md:badge-md badge-error">R</span>
           <span
             class="badge badge-sm md:badge-md badge-accent"
@@ -33,25 +33,31 @@
           ></span>
         </span>
 
-        <span
-          class="md:tooltip md:tooltip-left"
-          data-tip="Edit this video"
-          x-show="$store.conn.isAdmin && !edit"
+        <button
+          class="btn btn-xs btn-ghost btn-square mr-1.5 md:mr-2"
+          x-show="$store.conn.isAdmin"
+          @click.stop="resetEdit(!edit)"
         >
+          <span class="iconify h-6 w-6" :data-icon="edit ? 'mdi:pencil-remove' : 'mdi:lead-pencil'"></span>
+        </button>
+        <span class="!flex md:tooltip md:tooltip-left" data-tip="Expand details">
           <button
+            :disabled="edit || (!video.description && !video.image)"
             class="btn btn-xs btn-ghost btn-square"
-            @click.stop="resetEdit(true)"
+            @click.stop="expanded = !expanded"
           >
-            <span class="iconify h-6 w-6" data-icon="mdi:lead-pencil"></span>
+            <span class="iconify h-6 w-6" :data-icon="expanded ? 'mdi:arrow-up-thick' : 'mdi:arrow-down-thick'"></span>
           </button>
         </span>
       </p>
-      <p
-        class="mt-1 text-sm"
-        :class="{'text-gray-400': !isPlaying() && isRRatedDisabled()}"
-        x-show="!edit && video.description"
-        x-text="video.description"
-      ></p>
+      <div class="flex gap-2 mt-1 text-sm md:text-base" x-collapse x-show="expanded">
+        <img class="max-w-52 max-h-40 border border-base-content" x-show="video.image" :src="video.image">
+        <p
+          class="text-sm"
+          x-text="video.description || 'No description available.'"
+          :class="{'text-gray-400': !isPlaying() && isRRatedDisabled(), 'italic': !video.description}"
+        ></p>
+      </div>
 
       {% include "playlist_editor.njk" %}
     </div>
