@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import logging
 from pathlib import Path
+import random
 import re
 import shutil
 import subprocess
@@ -26,6 +27,7 @@ class Player(SingletonBaseClass):
     PLAYER_PATH = shutil.which("omxplayer")
     PLAYER_PROC_NAMES = ["omxplayer", "omxplayer.bin"]
     PUSH_PROGRESS_SLEEP_TIME = 0.25
+    BETWEEN_VIDEOS_SLEEP_TIME_RANGE = (0.75, 4.0)
     KILL_SLEEP_TIME = 0.2
     TASKS = ("run_player", "push_progress")
     VIDEOS_DIR = settings.VIDEOS_DIR
@@ -313,4 +315,5 @@ class Player(SingletonBaseClass):
                 logger.warning("No videos to play.")
                 await self.set_state(currently_playing=None)
 
-            await asyncio.sleep(settings.PLAYER_BETWEEN_VIDEO_SLEEP)
+            # Have fun with it, show Windows 95 screen from fbi between movies
+            await asyncio.sleep(random.uniform(*self.BETWEEN_VIDEOS_SLEEP_TIME_RANGE))
