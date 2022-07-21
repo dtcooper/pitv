@@ -1,9 +1,18 @@
 <div class="btn-group flex justify-center">
-  <button class="btn gap-2" @click="$store.player.togglePlayRRated()">
-    <span class="underline">R</span> Rated Content:
-      <span
-        :class="$store.player.playRRated ? 'text-success' : 'text-error'"
-        x-text="$store.player.playRRated ? 'ENABLED' : 'DISABLED'"
-      ></span>
+  <button class="btn btn-sm md:btn-md gap-2" @click="$store.player.togglePlayRRated()">
+    <span class="underline">R</span>
+    Rated Content:
+    <span
+      :class="$store.player.playRRated ? 'text-success' : 'text-error'"
+      x-text="$store.player.playRRated ? 'ENABLED' : 'DISABLED'"
+    ></span>
+  </button>
+  <button class="btn btn-sm md:btn-md gap-2" @click="$dispatch('playlist-item-expand-all')" x-show="$store.conn.isAdmin">
+    <span class="iconify h-5 w-5 md:h-6 md:w-6" data-icon="mdi:expand-all"></span>
+    <span class="hidden md:block">Expand All</span>
+  </button>
+  <button class="btn btn-sm md:btn-md gap-2" @click="$dispatch('playlist-item-collapse-all')" x-show="$store.conn.isAdmin">
+    <span class="iconify h-5 w-5 md:h-6 md:w-6" data-icon="mdi:collapse-all"></span>
+    <span class="hidden md:block">Collapse All</span>
   </button>
 </div>
