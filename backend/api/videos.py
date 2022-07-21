@@ -46,7 +46,7 @@ class Video:
         self.description = description
         self.is_r_rated = is_r_rated
         self.duration = duration
-        self.image = None
+        self.image = image
 
     @property
     def filename(self):
