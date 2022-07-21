@@ -26,7 +26,10 @@
           class="grow flex items-center gap-1.5 md:gap-2 text-sm md:text-base pr-2.5"
           :class="{'text-gray-400': !isPlaying() && isRRatedDisabled()}"
         >
-          <span class="italic font-bold grow" x-text="`${index + 1}. ${video.title}`"></span>
+          <span class="italic font-bold grow">
+            <span class="hidden md:inline" x-text="`${index + 1}.`"></span>
+            <span x-text="video.title"></span>
+          </span>
           <span x-show="video.isRRated" class="badge badge-sm md:badge-md badge-error">R</span>
           <span
             class="badge badge-sm md:badge-md badge-accent"
