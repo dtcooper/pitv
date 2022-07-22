@@ -5,9 +5,7 @@
     <span class="iconify h-6 w-6 md:h-12 md:w-12" data-icon="{{ icon }}"></span>
   {% endfor %}
 
-  <h1 class="text-center font-bold text-base md:text-3xl">
-    {{ TITLE }}
-  </h1>
+  <h1 class="text-center font-bold text-base md:text-3xl" x-text="$store.player.title"></h1>
 
   {% for icon in logoIcons | reverse %}
     <span class="iconify h-6 w-6 md:h-12 md:w-12" data-icon="{{ icon }}" data-flip="horizontal"></span>

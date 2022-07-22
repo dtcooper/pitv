@@ -55,6 +55,7 @@ document.addEventListener('alpine:init', () => {
     duration: null,
     playing: null,
     playRRated: null,
+    title: null,
 
     init () {
       Alpine.effect(() => this.scrollToCurrentlyPlaying())

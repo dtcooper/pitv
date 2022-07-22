@@ -7,11 +7,11 @@
       x-text="$store.player.playRRated ? 'ENABLED' : 'DISABLED'"
     ></span>
   </button>
-  <button class="btn btn-sm md:btn-md gap-2" @click="$dispatch('playlist-item-collapse-all')" x-show="$store.conn.isAdmin">
+  <button class="btn btn-sm md:btn-md gap-2" @click="$dispatch('playlist-item-collapse-all')">
     <span class="iconify h-5 w-5 md:h-6 md:w-6" data-icon="mdi:collapse-all"></span>
     <span class="hidden md:block">Collapse All</span>
   </button>
-  <button class="btn btn-sm md:btn-md gap-2" @click="$dispatch('playlist-item-expand-all')" x-show="$store.conn.isAdmin">
+  <button class="btn btn-sm md:btn-md gap-2" @click="$dispatch('playlist-item-expand-all')">
     <span class="iconify h-5 w-5 md:h-6 md:w-6" data-icon="mdi:expand-all"></span>
     <span class="hidden md:block">Expand All</span>
   </button>
