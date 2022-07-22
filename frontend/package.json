@@ -8,7 +8,7 @@
     "dev:11ty": "eleventy --serve",
     "dev:css": "tailwindcss --input src/styles.css --output dist/styles.css --watch",
     "dev:js": "esbuild --bundle src/script.js --outfile=dist/script.js --sourcemap --watch",
-    "clean": "rm -rf dist/ || true",
+    "clean": "rm -rf dist/",
     "build": "NODE_ENV=production npm-run-all clean -p build:* -s build:css:*",
     "build:11ty": "eleventy",
     "build:css": "tailwindcss --input src/styles.css --output dist/styles.css",
