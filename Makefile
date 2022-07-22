@@ -14,6 +14,12 @@ frontend:
 	fi \
 	&& npm run build
 
+frontend-docker:
+	docker compose run --rm frontend sh -c '\
+		if [ ! -d node_modules/ ]; then \
+			npm install; \
+		fi \
+		&& npm run build'
 
 up: CONTAINERS:=
 up:

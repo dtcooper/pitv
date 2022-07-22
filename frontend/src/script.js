@@ -181,7 +181,7 @@ document.addEventListener('alpine:init', () => {
       if (DATA.DEBUG && DATA.WEBSOCKET_URL_DEV_OVERRIDE) {
         websocketPrefix = DATA.WEBSOCKET_URL_DEV_OVERRIDE
       } else {
-        websocketPrefix = ((window.location.protocol === 'https:') ? 'wss://' : 'ws://') + DATA.DOMAIN_NAME
+        websocketPrefix = `wss://${DATA.DOMAIN_NAME}`
       }
       socket = new ReconnectingWebSocket(websocketPrefix.replace(/\/$/, '') + '/backend')
 
