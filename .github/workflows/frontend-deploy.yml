@@ -19,11 +19,6 @@ jobs:
         name: Checkout
         uses: actions/checkout@v3
       -
-        name: Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      -
         name: Create envfile
         uses: SpicyPizza/create-envfile@v1.3
         with:
@@ -32,7 +27,7 @@ jobs:
       -
         name: Build site
         run: |
-          make frontend
+          make frontend-docker
       -
         name: Clear current build
         uses: appleboy/ssh-action@master
