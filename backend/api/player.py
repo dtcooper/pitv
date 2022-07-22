@@ -169,7 +169,8 @@ class Player(SingletonBaseClass):
 
         else:
             websockets = (authorize_websocket,)
-            message = self._state  # Send entire state
+            # On first message, send extras (title)
+            message = {'title': settings.TITLE, **self._state}
 
         if message:
             message = convert_obj_to_camel(message)
