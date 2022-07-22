@@ -1,7 +1,7 @@
 <div class="flex flex-col flex-1">
   <template
     x-for="(video, index) in $store.player.videos"
-    :key="`${video.title}:${video.description}:${video.isRRated}:${video.image}:${video.duration}`"
+    :key="`${index}:${video.title}:${video.description}:${video.isRRated}:${video.image}:${video.duration}`"
   >
     <div
       class="odd:bg-base-200 px-2 py-2"
