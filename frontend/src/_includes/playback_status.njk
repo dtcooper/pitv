@@ -1,9 +1,9 @@
 <div
-  class="flex gap-2 justify-center items-center text-center font-bold text-base md:text-lg italic my-1"
+  class="flex gap-2 justify-center items-center text-center text-base md:text-lg my-1"
   :class="{'animate-pulse': !$store.player.currentlyPlaying}"
 >
-  <span x-text="$store.player.currentlyPlayingVideo('title') || 'Loading...'"></span>
-  <span x-show="$store.player.currentlyPlayingVideo('isRRated')" class="badge badge-error">R</span>
+  <span class="font-bold italic" x-text="$store.player.currentlyPlayingVideo('title') || 'Loading...'"></span>
+  <span class="badge badge-error md:badge-lg" x-show="$store.player.currentlyPlayingVideo('isRRated')">R</span>
 </div>
 
 <div
