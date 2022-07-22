@@ -48,7 +48,7 @@
         <span
           class="!flex"
           :class="{'md:tooltip md:tooltip-left': video.description || video.image}"
-          data-tip="Expand details"
+          :data-tip="expanded ? 'Collapse details' : 'Expand details'"
         >
           <button
             :disabled="edit || (!video.description && !video.image)"
