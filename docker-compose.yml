@@ -46,5 +46,19 @@ services:
       - "DOMAIN_NAME=${DOMAIN_NAME:?DOMAIN_NAME needs to be set. See .env file.}"
       - "CERTBOT_EMAIL=${CERTBOT_EMAIL:?CERTBOT_EMAIL needs to be set. See .env file.}"
 
+  frontend:
+    container_name: frontend
+    restart: "no"
+    image: node:18
+    working_dir: /app
+    command: sh -c 'if [ ! -d node_modules/ ] ; then npm install ; fi && npm run dev'
+    volumes:
+      - ./.env:/.env
+      - ./frontend:/app
+    profiles:
+      - frontend
+    ports:
+      - 8080:8080
+
 volumes:
   nginx_secrets:

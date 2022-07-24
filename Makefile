@@ -1,7 +1,7 @@
 COMPOSE:=docker compose
 PI_DIR=pi
 
-.PHONY: build frontend up shell down
+.PHONY: build frontend frontend-dev frontend-docker frontend-dev docker up shell down
 
 build: CONTAINERS:=
 build:
@@ -14,12 +14,26 @@ frontend:
 	fi \
 	&& npm run build
 
+frontend-dev:
+	cd frontend \
+	&& if [ ! -d node_modules ]; then \
+		npm install ; \
+	fi \
+	&& npm run dev
+
 frontend-docker:
-	docker compose run --rm frontend sh -c '\
+	docker compose run --rm -e GIT_REV=$(shell git rev-parse HEAD) frontend sh -c '\
 		if [ ! -d node_modules/ ]; then \
 			npm install; \
 		fi \
 		&& npm run build'
+
+frontend-dev-docker:
+	docker compose run --rm --service-ports frontend sh -c '\
+		if [ ! -d node_modules/ ]; then \
+			npm install; \
+		fi \
+		&& npm run dev'
 
 up: CONTAINERS:=
 up:

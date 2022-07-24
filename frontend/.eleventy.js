@@ -1,14 +1,17 @@
+const fs = require('fs')
 const process = require('process')
 const nunjucks = require('nunjucks')
 const htmlmin = require('html-minifier')
 const { execSync } = require('child_process')
 
 module.exports = (eleventyConfig) => {
-  const gitRev = execSync('git rev-parse HEAD || true').toString().trim()
+  const gitRev = (process.env.GIT_REV || execSync('git rev-parse HEAD || true').toString()).trim()
+  const isInDocker = fs.existsSync('/.dockerenv')
 
   eleventyConfig.setBrowserSyncConfig({
     files: ['dist/**/*'],
-    open: true
+    open: !isInDocker,
+    listen: isInDocker ? '0.0.0.0' : undefined
   })
 
   eleventyConfig.addWatchTarget('../.env')
