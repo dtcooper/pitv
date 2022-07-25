@@ -16,19 +16,11 @@ services:
     cap_add:
       - SYS_TTY_CONFIG  # For fbi
 
-  frontend:
-    container_name: frontend
-    restart: "no"
-    image: node:18
-    working_dir: /app
-    command: sh -c 'if [ ! -d node_modules/ ] ; then npm install ; fi && npm run dev'
-    volumes:
-      - ./.env:/.env
-      - ./frontend:/app
-    profiles:
-      - frontend
-    ports:
-      - 8080:8080
+  lirc:
+    restart: always
+    image: ghcr.io/dtcooper/raspvid-lirc:latest
+    build:
+      context: lirc
 
   nginx:
     restart: always

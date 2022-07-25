@@ -3,3 +3,4 @@ __pycache__/
 /docker-compose.override.yml
 /frontend/dist
 /frontend/node_modules
+/lirc/*.lircd.conf
