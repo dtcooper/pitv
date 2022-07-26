@@ -21,6 +21,8 @@ services:
     image: ghcr.io/dtcooper/raspvid-lirc:latest
     build:
       context: lirc
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
 
   nginx:
     restart: always
