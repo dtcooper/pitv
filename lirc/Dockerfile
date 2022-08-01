@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 AS base
+FROM ghcr.io/dtcooper/raspberrypi-os:bullseye AS base
 
 FROM base AS builder
 

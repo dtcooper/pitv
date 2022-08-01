@@ -1,4 +1,4 @@
-FROM --platform=linux/arm64 python:3.10
+FROM ghcr.io/dtcooper/raspberrypi-os:python3.10
 
 ARG OMXPLAYER_DEB_URL="http://archive.raspberrypi.org/debian/pool/main/o/omxplayer/omxplayer_20190723+gitf543a0d-1+bullseye_armhf.deb" \
     FIRMWARE_VC_LIBS_VERSION="ae17aabd" \
@@ -20,14 +20,7 @@ RUN mkdir -p /tmp/firmware /opt/vc/lib \
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 ENV PATH="/root/.poetry/bin:${PATH}"
 
-# Need to add armhf because omxplayer is armhf, not arm64
-RUN dpkg --add-architecture armhf \
-    # Add raspberry pi debian apt repo
-    && wget -qO - https://archive.raspberrypi.org/debian/raspberrypi.gpg.key \
-        | gpg --dearmor > /etc/apt/trusted.gpg.d/raspberrypi.gpg \
-    && echo "deb http://archive.raspberrypi.org/debian/ $(sh -c '. /etc/os-release; echo $VERSION_CODENAME') main" \
-        > /etc/apt/sources.list.d/raspi.list \
-    && apt-get update \
+RUN apt-get update \
     && apt-get upgrade -y \
     && wget -qO /tmp/omxplayer.deb "$OMXPLAYER_DEB_URL" \
     && apt-get install --no-install-recommends -y \
