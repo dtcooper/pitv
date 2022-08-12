@@ -17,3 +17,8 @@ PLAYER_ERROR_TIMEOUT = conf("PLAYER_ERROR_TIMEOUT", cast=float, default=2.0)
 PROJECT_ROOT = Path(__file__).parent.parent.absolute()
 TITLE = conf("TITLE", default="Raspberry Pi Video Player")
 VIDEOS_DIR = Path(conf("VIDEOS_DIR_OVERRIDE", default="/videos"))
+
+OVERSCAN_LEFT = conf("OVERSCAN_LEFT", cast=int, default=0)
+OVERSCAN_RIGHT = conf("OVERSCAN_RIGHT", cast=int, default=0)
+OVERSCAN_TOP = conf("OVERSCAN_TOP", cast=int, default=0)
+OVERSCAN_BOTTOM = conf("OVERSCAN_BOTTOM", cast=int, default=0)

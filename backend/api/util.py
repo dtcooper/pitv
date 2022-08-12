@@ -18,9 +18,21 @@ AUTO_RESTART_MIN_TRIES = 5
 AUTO_RESTART_AVERAGE_COROUTINE_FAIL_TIME_BEFORE_EXIT = 15
 IMDB_INVALID_IMAGES = {"https://m.media-amazon.png"}
 UPPERCASE_RE = re.compile(r"(?<!^)(?=[A-Z])")
+_BACKGROUND_TASKS = set()
 
 
 logger = logging.getLogger(__name__)
+
+
+def run_in_background(coro):
+    task = asyncio.create_task(coro)
+    _BACKGROUND_TASKS.add(task)
+    task.add_done_callback(_BACKGROUND_TASKS.discard)
+
+
+def cancel_all_background_tasks():
+    for task in _BACKGROUND_TASKS:
+        task.cancel()
 
 
 class SingletonBaseClass:
@@ -28,16 +40,12 @@ class SingletonBaseClass:
 
     def __init__(self, app):
         self.app = app
+        self._tasks = []
 
     async def startup(self):
         for task_name in self.TASKS:
             task = getattr(self, task_name)
-            asyncio.create_task(auto_restart_coroutine(task))
-
-    def _app_running(self):
-        if self.app.state.shutting_down:
-            raise asyncio.CancelledError()
-        return True
+            run_in_background(auto_restart_coroutine(task))
 
 
 async def auto_restart_coroutine(coro: typing.Coroutine, *args, **kwargs):

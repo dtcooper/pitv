@@ -11,7 +11,16 @@ from starlette.websockets import WebSocket
 
 from . import settings
 from .player import Player
-from .util import camel_to_underscore, convert_obj_to_camel, init_pkg_logger, search_imdb, verify_password
+from .remote import Remote
+from .util import (
+    camel_to_underscore,
+    cancel_all_background_tasks,
+    convert_obj_to_camel,
+    init_pkg_logger,
+    run_in_background,
+    search_imdb,
+    verify_password,
+)
 from .videos import VideosStore
 
 
@@ -54,7 +63,7 @@ class BackendEndpoint(WebSocketEndpoint):
         self.player.request_random_video()
 
     def command_download(self, url):
-        asyncio.create_task(self.player.request_url(url))
+        run_in_background(self.player.request_url(url))
 
     async def command_toggle_play_r_rated(self, _):
         await self.videos.toggle_play_r_rated()
@@ -129,18 +138,19 @@ class BackendEndpoint(WebSocketEndpoint):
 async def startup():
     init_pkg_logger()
 
-    app.state.shutting_down = False
     app.state.authorized_websockets = weakref.WeakSet()
     videos = app.state.videos = VideosStore(app)
     player = app.state.player = Player(app)
+    remote = app.state.remote = Remote(app)
 
     await videos.startup()
     await player.startup()
+    await remote.startup()
 
 
 def shutdown():
-    app.state.shutting_down = True
     app.state.player.kill_blocking()
+    cancel_all_background_tasks()
 
 
 routes = [

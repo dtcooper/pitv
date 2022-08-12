@@ -170,7 +170,7 @@ class Player(SingletonBaseClass):
         else:
             websockets = (authorize_websocket,)
             # On first message, send extras (title)
-            message = {'title': settings.TITLE, **self._state}
+            message = {"title": settings.TITLE, **self._state}
 
         if message:
             message = convert_obj_to_camel(message)
@@ -226,7 +226,7 @@ class Player(SingletonBaseClass):
         await self._dbus_helper("PlayPause")
 
     async def push_progress(self):
-        while self._app_running():
+        while True:
             state = {}
             error = False
 
@@ -257,7 +257,22 @@ class Player(SingletonBaseClass):
             await asyncio.sleep(self.PUSH_PROGRESS_SLEEP_TIME)
 
     async def run_player(self):
-        while self._app_running():
+
+        if any((settings.OVERSCAN_TOP, settings.OVERSCAN_RIGHT, settings.OVERSCAN_BOTTOM, settings.OVERSCAN_LEFT)):
+            dim_proc = await asyncio.create_subprocess_exec("vcgencmd", "get_lcd_info", stdout=asyncio.subprocess.PIPE)
+            dims, _ = await dim_proc.communicate()
+            if dim_proc.returncode != 0:
+                raise Exception("Error getting screen dimensions!")
+            width, height, _ = map(int, dims.decode("utf-8").strip().split())
+            logger.info(f"Got screen dimensions: {width}x{height}")
+
+            top, left = settings.OVERSCAN_TOP, settings.OVERSCAN_LEFT
+            bottom, right = height - settings.OVERSCAN_BOTTOM, width - settings.OVERSCAN_RIGHT
+            size_args = ["--win", f"{left} {top} {right} {bottom}"]
+        else:
+            size_args = ["--aspect_mode", "stretch"]
+
+        while True:
             if self.next_video_request is None:
                 video = self.videos.random()
             else:
@@ -265,16 +280,9 @@ class Player(SingletonBaseClass):
                 self.next_video_request = None
 
             if video is not None:
-                proc = await asyncio.create_subprocess_exec(
-                    self.PLAYER_PATH,
-                    "--no-osd",
-                    "--adev",
-                    "alsa",
-                    "--aspect-mode",
-                    "stretch",
-                    video.path,
-                    stdout=asyncio.subprocess.DEVNULL,
-                )
+                proc_args = [self.PLAYER_PATH, "--no-osd", "--adev", "alsa"] + size_args + [video.path]
+
+                proc = await asyncio.create_subprocess_exec(*proc_args, stdout=asyncio.subprocess.DEVNULL)
                 proc_start_time = time.time()
                 logger.info(f"player started: {video.filename}")
                 await self.set_state(currently_playing=video.filename)

@@ -10,8 +10,8 @@ dbus-next = "^0.2.3"
 python = "^3.10"
 starlette = "^0.20.4"
 uvicorn = {extras = ["standard"], version = "^0.18.2"}
-watchfiles = "^0.16.0"
-yt-dlp = "^2022.7.18"
+watchfiles = "^0.16.1"
+yt-dlp = "^2022.8.8"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.9"

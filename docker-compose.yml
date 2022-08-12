@@ -3,6 +3,8 @@ services:
     restart: always
     image: ghcr.io/dtcooper/raspvid-backend:latest
     stop_signal: SIGINT
+    depends_on:
+      - lirc
     build:
       context: backend
     volumes:
@@ -10,11 +12,7 @@ services:
       - ./.env:/.env:ro
     devices:
       - /dev/vchiq:/dev/vchiq
-      - /dev/fb0:/dev/fb0
-      - /dev/tty1:/dev/tty1  # For fbi
       - /dev/snd:/dev/snd
-    cap_add:
-      - SYS_TTY_CONFIG  # For fbi
 
   lirc:
     restart: always
@@ -22,16 +20,15 @@ services:
     build:
       context: lirc
     devices:
-      - /dev/bus/usb:/dev/bus/usb
+      - /dev/lirc0:/dev/lirc0
 
   nginx:
     restart: always
     image: jonasal/nginx-certbot:3.2.0-nginx1.23.0-alpine
     depends_on:
       - backend
-      - logs
     volumes:
-      - ./backend/nginx.conf:/etc/nginx/templates/backend.conf.template:ro
+      - ./nginx.conf:/etc/nginx/templates/backend.conf.template:ro
       - nginx_secrets:/etc/letsencrypt
     ports:
       - 80:80

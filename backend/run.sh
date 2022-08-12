@@ -7,11 +7,6 @@ else
 fi
 
 
-# Set backdrop for when omxplayer isn't running
-if ! pgrep fbi >/dev/null ; then
-    fbi -d /dev/fb0 -T 1 -a --nocomments --noverbose backsplash.png >/dev/null
-fi
-
 EXTRA_ARGS=
 if [ "$DEBUG" -a "$DEBUG" != '0' ]; then
     EXTRA_ARGS=--reload
