@@ -27,7 +27,7 @@ class Player(SingletonBaseClass):
     PLAYER_PATH = shutil.which("omxplayer")
     PLAYER_PROC_NAMES = ["omxplayer", "omxplayer.bin"]
     PUSH_PROGRESS_SLEEP_TIME = 0.25
-    BETWEEN_VIDEOS_SLEEP_TIME_RANGE = (1.5, 7.5)
+    BETWEEN_VIDEOS_SLEEP_TIME_RANGE = (1.5, 8.5)
     KILL_SLEEP_TIME = 0.2
     TASKS = ("run_player", "push_progress")
     VIDEOS_DIR = settings.VIDEOS_DIR
@@ -41,6 +41,7 @@ class Player(SingletonBaseClass):
         self.websockets = app.state.authorized_websockets
         self.stop_playing_event = asyncio.Event()
         self.next_video_request = None
+        self.show_extra_static = False
         self._state = {
             # JS object style keys
             "videos": self.videos.as_json(),
@@ -155,6 +156,7 @@ class Player(SingletonBaseClass):
 
     def request_random_video(self):
         logger.info("Requesting random video")
+        self.show_extra_static = True
         self.stop_playing_event.set()
 
     def get_state(self, key=None):
@@ -327,6 +329,8 @@ class Player(SingletonBaseClass):
 
                 self.stop_playing_event.clear()
                 await stop_playing_wait_task
+                show_extra_static = self.show_extra_static
+                self.show_extra_static = False
 
                 if proc_wait_task in pending:
                     await self.kill()
@@ -343,6 +347,9 @@ class Player(SingletonBaseClass):
                             del self.videos[video]
                             await self.set_state(videos=self.videos.as_json())
                 else:
+                    show_extra_static = True
+
+                if show_extra_static:
                     sleep_seconds = random.uniform(*self.BETWEEN_VIDEOS_SLEEP_TIME_RANGE)
                     logger.info(f"{video.filename} ended. Sleeping for {sleep_seconds:.3f}s")
                     await asyncio.sleep(sleep_seconds)
