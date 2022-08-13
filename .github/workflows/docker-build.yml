@@ -16,7 +16,7 @@ jobs:
     name: Build container
     strategy:
       matrix:
-        container: [backend, lirc]
+        container: [backend, lirc, overlay]
     steps:
       -
         name: Checkout
