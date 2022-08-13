@@ -59,8 +59,8 @@ class Remote(SingletonBaseClass):
                 await self.videos.toggle_mute(value=True)
             elif button in ("KEY_UP", "KEY_DOWN"):
                 direction = 1 if button == "KEY_UP" else -1
-                index = self.videos.index(self.player.get_state("currently_playing"))
-                filename = self.videos.filename_at_index(index + direction)
-                self.player.request_video(filename)
+                self.player.change_channel(direction)
+            elif button == "KEY_OK":
+                self.player.request_random_video()
 
             await self.player.notify("keyPress", button=button)

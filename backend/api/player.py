@@ -100,6 +100,11 @@ class Player(SingletonBaseClass):
         else:
             logger.info(f"Invalid video request: {filename}")
 
+    def change_channel(self, direction=1):
+        index = self.videos.index(self.get_state("currently_playing"))
+        filename = self.videos.filename_at_index(index + direction)
+        self.request_video(filename)
+
     async def request_url(self, url):
         raise Exception("Broken!")
 
