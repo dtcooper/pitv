@@ -16,7 +16,7 @@ document.addEventListener('alpine:init', () => {
     socket.send(JSON.stringify(data))
   }
 
-  Alpine.store('notify', {
+  Alpine.store('alert', {
     alerts: [],
     id: 0,
     show (message, level = 'info', timeout = 5000) {
@@ -153,7 +153,7 @@ document.addEventListener('alpine:init', () => {
   })
 
   Alpine.store('conn', {
-    notify: Alpine.store('notify'),
+    alert: Alpine.store('alert'),
     persist: Alpine.store('persist'),
     player: Alpine.store('player'),
     authorized: false,
@@ -211,10 +211,15 @@ document.addEventListener('alpine:init', () => {
         let message = event.data
         if (this.authorized) {
           message = JSON.parse(message)
+          if (DATA.DEBUG) {
+            console.log('message:', message)
+          }
           for (const key in message) {
             const value = message[key]
             if (key === 'notify') {
-              this.notify.show(value.message, value.level || undefined, value.timeout || undefined)
+              if (value.type === 'alert') {
+                this.alert.show(value.message, value.level || undefined, value.timeout || undefined)
+              }
             } else {
               this.player[key] = value
             }

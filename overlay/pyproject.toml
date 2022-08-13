@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "overlay"
+version = "0.1.0"
+description = ""
+authors = ["None"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+dispmanx = {extras = ["numpy"], version = "^0.1.0"}
+pygame = "^2.1.2"
+python-dotenv = "^0.20.0"
+websocket-client = "^1.3.3"
+
+[tool.poetry.dev-dependencies]
+ipdb = "^0.13.9"
+ipython = "^8.4.0"
+watchdog = {extras = ["watchmedo"], version = "^2.1.9"}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

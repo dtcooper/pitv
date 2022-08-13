@@ -103,11 +103,15 @@ class VideosStore(SingletonBaseClass, MutableMapping):
         )
         await proc.wait()
 
-    async def toggle_mute(self):
-        self._muted = not self._muted
-        self.save_data()
-        await self.call_amixer()
-        await self.app.state.player.set_state(muted=self._muted)
+    async def toggle_mute(self, value=None):
+        if value is None:
+            value = not self._muted
+
+        if self._muted != value:
+            self._muted = not self._muted
+            self.save_data()
+            await self.call_amixer()
+            await self.app.state.player.set_state(muted=self._muted)
 
     async def toggle_play_r_rated(self):
         self._play_r_rated = not self._play_r_rated
@@ -193,6 +197,17 @@ class VideosStore(SingletonBaseClass, MutableMapping):
 
     def values(self):
         return (value for _, value in self.items())
+
+    @convert_arg_to_filename
+    def index(self, filename):
+        try:
+            return list(self.keys()).index(filename)
+        except ValueError:
+            return 0
+
+    def filename_at_index(self, index):
+        index = index % len(self)
+        return list(self.keys())[index]
 
     def update(self, *args, **kwargs):
         with self.transaction():

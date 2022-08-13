@@ -1,8 +1,9 @@
 import asyncio
 import logging
 
-from .util import SingletonBaseClass
 from .player import Player
+from .util import SingletonBaseClass
+from .videos import VideosStore
 
 
 logger = logging.getLogger(__name__)
@@ -10,35 +11,56 @@ logger = logging.getLogger(__name__)
 
 class Remote(SingletonBaseClass):
     TASKS = ("listen_to_lirc",)
+    reader: asyncio.StreamReader
 
     def __init__(self, app):
         super().__init__(app)
 
         self.player: Player = app.state.player
+        self.videos: VideosStore = app.state.videos
 
-    async def listen_to_lirc(self):
-        reader, _ = await asyncio.open_connection("lirc", 8765)
-        logger.info("Connected to lirc:8765")
+    async def readline(self) -> str:
+        line = await self.reader.readline()
+        if not line:
+            raise Exception("readline() for lirc socket returned empty results")
+        return line.decode("utf-8").strip()
 
-        async def readline():
-            line = await reader.readline()
-            if not line:
-                raise Exception("Got no data from lirc")
-            return line.decode("utf-8").strip()
+    async def read_lirc_line(self) -> str:
+        while True:
+            line = await self.readline()
 
-        ignore = False
-
-        while line := await readline():
-            # Deal with internal messages
             if line == "BEGIN":
-                while (await readline()) != "END":
+                while (await self.readline()) != "END":
                     pass
+
+            _, repeats, button, _ = line.split()
+            if int(repeats) > 0:
                 continue
 
-            code, repeat_count, button_name, remote = line.split()
-            logger.info(f"Got {button_name} - {repeat_count} repeat(s)")
+            logger.info(f"{button} pressed")
+            return button
 
-            if button_name == "KEY_RIGHT":
+    async def listen_to_lirc(self):
+        self.reader, _ = await asyncio.open_connection("lirc", 8765)
+        logger.info("Connected to lirc:8765")
+
+        while True:
+            button = await self.read_lirc_line()
+
+            if button == "KEY_RIGHT":
                 await self.player.seek(15)
-            elif button_name == "KEY_LEFT":
+            elif button == "KEY_LEFT":
                 await self.player.seek(-15)
+            elif button == "KEY_BACK":
+                await self.player.set_position(0)
+            elif button == "KEY_VOLUMEUP":
+                await self.videos.toggle_mute(value=False)
+            elif button == "KEY_VOLUMEDOWN":
+                await self.videos.toggle_mute(value=True)
+            elif button in ("KEY_UP", "KEY_DOWN"):
+                direction = 1 if button == "KEY_UP" else -1
+                index = self.videos.index(self.player.get_state("currently_playing"))
+                filename = self.videos.filename_at_index(index + direction)
+                self.player.request_video(filename)
+
+            await self.player.notify("keyPress", button=button)

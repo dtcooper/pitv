@@ -27,7 +27,7 @@ class Player(SingletonBaseClass):
     PLAYER_PATH = shutil.which("omxplayer")
     PLAYER_PROC_NAMES = ["omxplayer", "omxplayer.bin"]
     PUSH_PROGRESS_SLEEP_TIME = 0.25
-    BETWEEN_VIDEOS_SLEEP_TIME_RANGE = (0.75, 4.0)
+    BETWEEN_VIDEOS_SLEEP_TIME_RANGE = (1.5, 7.5)
     KILL_SLEEP_TIME = 0.2
     TASKS = ("run_player", "push_progress")
     VIDEOS_DIR = settings.VIDEOS_DIR
@@ -183,6 +183,21 @@ class Player(SingletonBaseClass):
         if authorize_websocket is not None:
             self.websockets.add(websocket)
 
+    async def notify(self, type, single_websocket=None, **kwargs):
+        if single_websocket is None:
+            websockets = self.websockets
+        else:
+            websockets = (single_websocket,)
+
+        message = {"type": type}
+        message.update(kwargs)
+        message = convert_obj_to_camel({"notify": message})
+        for websocket in websockets:
+            try:
+                await websocket.send_json(message)
+            except Exception:
+                logger.exception("Couldn't write to websocket")
+
     async def get_dbus_message_bus(self):
         if self._dbus_message_bus is None:
             while self._dbus_message_bus is None:
@@ -218,9 +233,11 @@ class Player(SingletonBaseClass):
 
     async def seek(self, seconds):
         await self._dbus_helper("Seek", "x", [round(seconds * 1000000)])
+        await self.notify("seek")
 
     async def set_position(self, seconds):
         await self._dbus_helper("SetPosition", "ox", ["/not/used", round(seconds * 1000000)])
+        await self.notify("seek")
 
     async def play_pause(self):
         await self._dbus_helper("PlayPause")
@@ -256,8 +273,7 @@ class Player(SingletonBaseClass):
             await self.set_state(**state)
             await asyncio.sleep(self.PUSH_PROGRESS_SLEEP_TIME)
 
-    async def run_player(self):
-
+    async def get_omxplayer_size_args(self):
         if any((settings.OVERSCAN_TOP, settings.OVERSCAN_RIGHT, settings.OVERSCAN_BOTTOM, settings.OVERSCAN_LEFT)):
             dim_proc = await asyncio.create_subprocess_exec("vcgencmd", "get_lcd_info", stdout=asyncio.subprocess.PIPE)
             dims, _ = await dim_proc.communicate()
@@ -268,9 +284,12 @@ class Player(SingletonBaseClass):
 
             top, left = settings.OVERSCAN_TOP, settings.OVERSCAN_LEFT
             bottom, right = height - settings.OVERSCAN_BOTTOM, width - settings.OVERSCAN_RIGHT
-            size_args = ["--win", f"{left} {top} {right} {bottom}"]
+            return ["--win", f"{left} {top} {right} {bottom}"]
         else:
-            size_args = ["--aspect_mode", "stretch"]
+            return ["--aspect_mode", "stretch"]
+
+    async def run_player(self):
+        size_args = await self.get_omxplayer_size_args()
 
         while True:
             if self.next_video_request is None:
@@ -280,18 +299,20 @@ class Player(SingletonBaseClass):
                 self.next_video_request = None
 
             if video is not None:
-                proc_args = [self.PLAYER_PATH, "--no-osd", "--adev", "alsa"] + size_args + [video.path]
+                proc_args = [self.PLAYER_PATH, "--no-osd", "--adev", "alsa", "--layer", "0"] + size_args + [video.path]
 
                 proc = await asyncio.create_subprocess_exec(*proc_args, stdout=asyncio.subprocess.DEVNULL)
                 proc_start_time = time.time()
-                logger.info(f"player started: {video.filename}")
+                logger.info(f"Player started: {video.filename}")
                 await self.set_state(currently_playing=video.filename)
+                await self.notify("newVideo")
 
                 wait_tasks = {
                     (proc_wait_task := asyncio.create_task(proc.wait())),
                     (stop_playing_wait_task := asyncio.create_task(self.stop_playing_event.wait())),
                 }
                 _, pending = await asyncio.wait(wait_tasks, return_when=asyncio.FIRST_COMPLETED)
+                await self.set_state(currently_playing=None)
 
                 if stop_playing_wait_task in pending:
                     # Rather than cancel the task (doesn't seem to work), manually trigger it being done
@@ -305,7 +326,6 @@ class Player(SingletonBaseClass):
                 if proc_wait_task in pending:
                     await self.kill()
                     await proc_wait_task
-
                 elif proc.returncode != 0:
                     proc_end_time = time.time()
                     if proc_end_time - proc_start_time <= settings.PLAYER_ERROR_TIMEOUT:
@@ -317,13 +337,13 @@ class Player(SingletonBaseClass):
                         if video in self.videos:
                             del self.videos[video]
                             await self.set_state(videos=self.videos.as_json())
+                else:
+                    sleep_seconds = random.uniform(*self.BETWEEN_VIDEOS_SLEEP_TIME_RANGE)
+                    logger.info(f"{video.filename} ended. Sleeping for {sleep_seconds:.3f}s")
+                    await asyncio.sleep(sleep_seconds)
 
                 logger.info("Player exited. Restarting")
-                await self.set_state(currently_playing=None)
 
             else:
                 logger.warning("No videos to play.")
                 await self.set_state(currently_playing=None)
-
-            # Have fun with it, show Windows 95 screen from fbi between movies
-            await asyncio.sleep(random.uniform(*self.BETWEEN_VIDEOS_SLEEP_TIME_RANGE))

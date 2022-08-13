@@ -91,7 +91,9 @@ class BackendEndpoint(WebSocketEndpoint):
         results = await search_imdb(title)
         response = {"imdb": {"path": path, "results": results, "working": False}}
         if not results:
-            response["notify"] = {"message": "No results on IMDb found!", "level": "error"}
+            await self.player.notify(
+                single_websocket=websocket, type="alert", message="No results on IMDB found!", level="error"
+            )
         await websocket.send_json(convert_obj_to_camel(response))
 
     async def command_seek(self, seconds):
