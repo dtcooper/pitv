@@ -15,8 +15,8 @@ PI. I use a 3 B+, but it should work on any newer board.
     ```
 3. Clone repo, build containers
     ```bash
-    git clone https://github.com/dtcooper/raspvid.git
-    cd raspvid
+    git clone https://github.com/dtcooper/pitv.git
+    cd pitv
     make build
     ```
 4. Copy over and edit the `.env` file

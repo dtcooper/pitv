@@ -1,7 +1,7 @@
 services:
   backend:
     restart: always
-    image: ghcr.io/dtcooper/raspvid-backend:latest
+    image: ghcr.io/dtcooper/pitv-backend:latest
     stop_signal: SIGINT
     depends_on:
       - lirc
@@ -16,7 +16,7 @@ services:
 
   overlay:
     restart: always
-    image: ghcr.io/dtcooper/raspvid-overlay:latest
+    image: ghcr.io/dtcooper/pitv-overlay:latest
     depends_on:
       - backend
     build:
@@ -29,7 +29,7 @@ services:
 
   lirc:
     restart: always
-    image: ghcr.io/dtcooper/raspvid-lirc:latest
+    image: ghcr.io/dtcooper/pitv-lirc:latest
     build:
       context: lirc
     devices:
