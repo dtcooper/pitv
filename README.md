@@ -28,3 +28,11 @@ PI. I use a 3 B+, but it should work on any newer board.
     docker compose build
     docker compose up -d
     ```
+
+### TODO List
+
+- [ ] The power button on the remote control should blank the screen, and turn
+      the player off. Web UI will have to support it too (maybe)
+- [ ] Progress indicator on overlay when seek happens
+- [ ] Rated "R" should show up on overlay
+- [ ] _Some_ sort of navigable overlay menu
