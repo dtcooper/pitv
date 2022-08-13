@@ -33,7 +33,7 @@ services:
     build:
       context: lirc
     devices:
-      - /dev/lirc0:/dev/lirc0
+      - /dev/bus/usb:/dev/bus/usb
 
   nginx:
     restart: always
