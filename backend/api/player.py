@@ -280,7 +280,8 @@ class Player(SingletonBaseClass):
             await self.set_state(**state)
             await asyncio.sleep(self.PUSH_PROGRESS_SLEEP_TIME)
 
-    async def get_omxplayer_size_args(self):
+    @staticmethod
+    async def get_omxplayer_size_args():
         if any((settings.OVERSCAN_TOP, settings.OVERSCAN_RIGHT, settings.OVERSCAN_BOTTOM, settings.OVERSCAN_LEFT)):
             dim_proc = await asyncio.create_subprocess_exec("vcgencmd", "get_lcd_info", stdout=asyncio.subprocess.PIPE)
             dims, _ = await dim_proc.communicate()
@@ -293,7 +294,7 @@ class Player(SingletonBaseClass):
             bottom, right = height - settings.OVERSCAN_BOTTOM, width - settings.OVERSCAN_RIGHT
             return ["--win", f"{left} {top} {right} {bottom}"]
         else:
-            return ["--aspect_mode", "stretch"]
+            return ["--aspect-mode", "stretch"]
 
     async def run_player(self):
         size_args = await self.get_omxplayer_size_args()
@@ -306,9 +307,8 @@ class Player(SingletonBaseClass):
                 self.next_video_request = None
 
             if video is not None:
-                proc_args = [self.PLAYER_PATH, "--no-osd", "--adev", "alsa", "--layer", "0"] + size_args + [video.path]
-
-                proc = await asyncio.create_subprocess_exec(*proc_args, stdout=asyncio.subprocess.DEVNULL)
+                args = [self.PLAYER_PATH, "--no-osd", "--adev", "alsa", "--layer", "0"] + size_args + [video.path]
+                proc = await asyncio.create_subprocess_exec(*args, stdout=asyncio.subprocess.DEVNULL)
                 proc_start_time = time.time()
                 logger.info(f"Player started: {video.filename}")
                 await self.set_state(currently_playing=video.filename)
@@ -342,10 +342,7 @@ class Player(SingletonBaseClass):
                             f"Player exited in under {settings.PLAYER_ERROR_TIMEOUT:.2f}s with code"
                             f" {proc.returncode} for: {video.filename}."
                         )
-                        logger.warning(f"Removing unplayable {video.filename} from videos list")
-                        if video in self.videos:
-                            del self.videos[video]
-                            await self.set_state(videos=self.videos.as_json())
+                        logger.warning(f"{video.filename} appears to be unplayable!")
                 else:
                     show_extra_static = True
 
@@ -358,4 +355,5 @@ class Player(SingletonBaseClass):
 
             else:
                 logger.warning("No videos to play.")
+                await asyncio.sleep(5)
                 await self.set_state(currently_playing=None)

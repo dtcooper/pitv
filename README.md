@@ -35,4 +35,5 @@ PI. I use a 3 B+, but it should work on any newer board.
       the player off. Web UI will have to support it too (maybe)
 - [ ] Progress indicator on overlay when seek happens
 - [ ] Rated "R" should show up on overlay
+- [ ] Show play/pause state in overlay
 - [ ] _Some_ sort of navigable overlay menu

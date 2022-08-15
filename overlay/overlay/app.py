@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import NamedTuple
 from collections import defaultdict
 import json
 import threading
@@ -13,29 +14,25 @@ from .threads.static import StaticBackgroundThread
 from .threads.ui import UIThread
 
 
-ENV = dotenv_values("/.env")
-
-
 class OverlayApp:
     FPS = 30
     thread_classes = (StaticBackgroundThread, UIThread)
     static: StaticBackgroundThread
     ui: UIThread
     threads: list
-    overscan: tuple[int]
+    threads_started: bool
+    env: dict
 
     def __init__(self):
-        overscan = []
-        for coord in ("top", "right", "bottom", "left"):
-            overscan.append(int(ENV.get(f"OVERSCAN_{coord.upper()}", 0)))
-        self.overscan = tuple(overscan)
-
         self.state = {}
+        self.env = dotenv_values("/.env")
+        self.threads_started = False
         self._state_subscribers = defaultdict(list)
         self._notification_subscribers = defaultdict(list)
+        self.overscan = {o: int(self.env.get(f"OVERSCAN_{o.upper()}", 0)) for o in ("top", "left", "right", "bottom")}
 
     @staticmethod
-    def _run_as_daemon_thread(thread_obj):
+    def _create_daemon_thread(thread_obj):
         def target():
             while True:
                 try:
@@ -49,7 +46,6 @@ class OverlayApp:
 
         thread = threading.Thread(target=target)
         thread.daemon = True
-        thread.start()
         return thread
 
     def subscribe_to_state_change(self, key, callback):
@@ -65,12 +61,14 @@ class OverlayApp:
         # Create thread objects
         for thread_cls in self.thread_classes:
             thread_obj = thread_cls(app=self)
+            print(f"Initializing {thread_obj.name} thread")
             setattr(self, thread_cls.name, thread_obj)
             thread_objs.append(thread_obj)
 
         # Start them
         for thread_obj in thread_objs:
-            threads.append(self._run_as_daemon_thread(thread_obj))
+            print(f"Starting {thread_obj.name} thread")
+            threads.append(self._create_daemon_thread(thread_obj))
 
         # Subscribe to websocket
         while True:
@@ -78,12 +76,18 @@ class OverlayApp:
                 ws = websocket.WebSocket()
                 ws.connect("ws://backend:8000/backend")
 
-                ws.send(ENV["PASSWORD_USER"])
+                ws.send(self.env["PASSWORD_USER"])
                 if ws.recv() != "PASSWORD_ACCEPTED_USER":
                     raise Exception("Invalid password")
 
                 # first message is always full state
                 self.state = data = json.loads(ws.recv())
+
+                # Now that we have some state, we can start the threads
+                if not self.threads_started:
+                    for thread in threads:
+                        thread.start()
+                    self.threads_started = True
 
                 while True:
                     for key, value in data.items():
@@ -95,7 +99,7 @@ class OverlayApp:
                         else:
                             self.state[key] = value
                             for callback in self._state_subscribers[key]:
-                                callback(value)
+                                callback()
 
                     data = json.loads(ws.recv())
 

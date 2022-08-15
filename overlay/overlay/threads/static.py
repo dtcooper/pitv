@@ -22,9 +22,10 @@ class StaticBackgroundThread:
         self._max_buffer_value = numpy.iinfo(self._display.buffer.dtype).max
         self._rng = numpy.random.default_rng()
 
-        app.subscribe_to_state_change("currentlyPlaying", self._show_static_callback)
+        app.subscribe_to_state_change("currentlyPlaying", self.currently_playing_changed)
 
-    def _show_static_callback(self, currently_playing):
+    def currently_playing_changed(self):
+        currently_playing = self._app.state["currentlyPlaying"]
         self._show_static_queue.put(currently_playing is None)
 
     def _show_static_until_message(self):
