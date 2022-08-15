@@ -27,7 +27,7 @@ class Player(SingletonBaseClass):
     PLAYER_PATH = shutil.which("omxplayer")
     PLAYER_PROC_NAMES = ["omxplayer", "omxplayer.bin"]
     PUSH_PROGRESS_SLEEP_TIME = 0.25
-    BETWEEN_VIDEOS_SLEEP_TIME_RANGE = (1.5, 8.5)
+    BETWEEN_VIDEOS_SLEEP_TIME_RANGE = (1.5, 8.5)  # make sure max is updated in ui.py
     KILL_SLEEP_TIME = 0.2
     TASKS = ("run_player", "push_progress")
     VIDEOS_DIR = settings.VIDEOS_DIR
@@ -154,10 +154,11 @@ class Player(SingletonBaseClass):
 
         await self.set_state(download=None)
 
-    def request_random_video(self):
+    async def request_random_video(self):
         logger.info("Requesting random video")
         self.show_extra_static = True
         self.stop_playing_event.set()
+        await self.notify("requestRandomVideo")
 
     def get_state(self, key=None):
         return self._state if key is None else self._state[key]
@@ -248,6 +249,7 @@ class Player(SingletonBaseClass):
 
     async def play_pause(self):
         await self._dbus_helper("PlayPause")
+        await self.notify("playPause")
 
     async def push_progress(self):
         while True:

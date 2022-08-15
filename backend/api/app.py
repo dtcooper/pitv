@@ -59,8 +59,8 @@ class BackendEndpoint(WebSocketEndpoint):
     def command_play(self, video_request):
         self.player.request_video(video_request)
 
-    def command_play_random(self, _):
-        self.player.request_random_video()
+    async def command_play_random(self, _):
+        await self.player.request_random_video()
 
     def command_download(self, url):
         run_in_background(self.player.request_url(url))
