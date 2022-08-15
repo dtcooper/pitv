@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import NamedTuple
 from collections import defaultdict
 import json
 import threading

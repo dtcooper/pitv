@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 pygame.freetype.init()
 
 
-def format_duration(seconds: int, force_hour: bool=False):
+def format_duration(seconds: int, force_hour: bool = False):
     seconds = round(seconds)
     s = f"{seconds // 3600}:" if (seconds >= 3600 or force_hour) else ""
     return f"{s}{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
@@ -23,7 +23,6 @@ def format_duration(seconds: int, force_hour: bool=False):
 
 class UIThread:
     name = "ui"
-    BG_SEMI_TRANS = "#00000099"
 
     def __init__(self, app: OverlayApp):
         self.app = app
@@ -70,7 +69,7 @@ class UIThread:
             self.muted_changed()
 
     def currently_playing_changed(self, timeout=4500):
-        currently_playing = self.app.state['currentlyPlaying']
+        currently_playing = self.app.state["currentlyPlaying"]
 
         if currently_playing is None:
             self._display_channel = (-1, None, None)
