@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 import datetime
 import logging
 from pathlib import Path
@@ -42,6 +43,7 @@ class Player(SingletonBaseClass):
         self.stop_playing_event = asyncio.Event()
         self.next_video_request = None
         self.show_extra_static = False
+        self.positions = defaultdict(int)
         self._state = {
             # JS object style keys
             "videos": self.videos.as_json(),
@@ -154,11 +156,10 @@ class Player(SingletonBaseClass):
 
         await self.set_state(download=None)
 
-    async def request_random_video(self):
+    def request_random_video(self):
         logger.info("Requesting random video")
         self.show_extra_static = True
         self.stop_playing_event.set()
-        await self.notify("requestRandomVideo")
 
     def get_state(self, key=None):
         return self._state if key is None else self._state[key]
@@ -277,6 +278,7 @@ class Player(SingletonBaseClass):
             else:
                 currently_playing = self.get_state("currently_playing")
                 duration = datetime.timedelta(seconds=state["duration"])
+                self.positions[currently_playing] = max(state["position"] - 1, 0)  # A second of buffer here
                 await self.videos.update_video(currently_playing, duration=duration)
 
             await self.set_state(**state)
@@ -309,7 +311,11 @@ class Player(SingletonBaseClass):
                 self.next_video_request = None
 
             if video is not None:
-                args = [self.PLAYER_PATH, "--no-osd", "--adev", "alsa", "--layer", "0"] + size_args + [video.path]
+                position = self.positions[video.filename]
+                args = [self.PLAYER_PATH, "--no-osd", "--adev", "alsa", "--layer", "0"] + size_args
+                if position > 0:
+                    args.extend(["--pos", str(position)])
+                args.append(video.path)
                 proc = await asyncio.create_subprocess_exec(*args, stdout=asyncio.subprocess.DEVNULL)
                 proc_start_time = time.time()
                 logger.info(f"Player started: {video.filename}")
@@ -337,16 +343,18 @@ class Player(SingletonBaseClass):
                 if proc_wait_task in pending:
                     await self.kill()
                     await proc_wait_task
-                elif proc.returncode != 0:
-                    proc_end_time = time.time()
-                    if proc_end_time - proc_start_time <= settings.PLAYER_ERROR_TIMEOUT:
-                        logger.error(
-                            f"Player exited in under {settings.PLAYER_ERROR_TIMEOUT:.2f}s with code"
-                            f" {proc.returncode} for: {video.filename}."
-                        )
-                        logger.warning(f"{video.filename} appears to be unplayable!")
-                else:
-                    show_extra_static = True
+                else:  # Omxplayer exitted
+                    self.positions[video.filename] = 0  # Reset position back to zero
+                    if proc.returncode != 0:
+                        proc_end_time = time.time()
+                        if proc_end_time - proc_start_time <= settings.PLAYER_ERROR_TIMEOUT:
+                            logger.error(
+                                f"Player exited in under {settings.PLAYER_ERROR_TIMEOUT:.2f}s with code"
+                                f" {proc.returncode} for: {video.filename}."
+                            )
+                            logger.warning(f"{video.filename} appears to be unplayable!")
+                    else:
+                        show_extra_static = True  # Show extra static if it exited cleanly
 
                 if show_extra_static:
                     sleep_seconds = random.uniform(*self.BETWEEN_VIDEOS_SLEEP_TIME_RANGE)

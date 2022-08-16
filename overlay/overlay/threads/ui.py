@@ -42,7 +42,6 @@ class UIThread:
         app.subscribe_to_notification("keyPress", self.key_press)
         app.subscribe_to_notification("playPause", lambda _: self.currently_playing_changed())
         app.subscribe_to_notification("playPause", lambda _: self.show_progress_bar())
-        app.subscribe_to_notification("requestRandomVideo", lambda _: self.request_random_video())
 
         fonts_dir = Path(__file__).parent.parent.parent / "fonts"
         self.fonts = {
@@ -72,13 +71,14 @@ class UIThread:
         self._display_channel = (-1, None, None, False)
         self._display_muted = (-1, None)
         self._display_progress_bar = -1
-        self._diplay_random_video = -1
+        self._power_button_info = -1
 
     def key_press(self, data):
         button = data["button"]
+        tick = pygame.time.get_ticks()
         if button in "KEY_MENUBACK":
             expires, _, _ = self._display_channel
-            if expires < pygame.time.get_ticks():
+            if expires < tick:
                 menuback_timeout = 10000
                 self.currently_playing_changed(timeout=menuback_timeout)
                 self.muted_changed(timeout=menuback_timeout)
@@ -87,6 +87,8 @@ class UIThread:
                 self.clear_all()
         elif button in ("KEY_VOLUMEUP", "KEY_VOLUMEDOWN"):
             self.muted_changed()
+        elif button == "KEY_POWER":
+            self._power_button_info = tick + 4000
 
     def currently_playing_changed(self, timeout=4500):
         currently_playing = self.app.state["currentlyPlaying"]
@@ -108,10 +110,6 @@ class UIThread:
 
     def show_progress_bar(self, timeout=4500):
         self._display_progress_bar = pygame.time.get_ticks() + timeout
-
-    def request_random_video(self):
-        timeout = 9500  # Slightly higher than of BETWEEN_VIDEOS_SLEEP_TIME_RANGE
-        self._diplay_random_video = pygame.time.get_ticks() + timeout
 
     def render_font(self, text, fgcolor=WHITE, bgcolor=BLACK_ALPHA, size=24, font="regular", padding=15):
         font = self.fonts.get(font)
@@ -168,10 +166,9 @@ class UIThread:
         if expires < tick and not paused:
             return
 
-        if self.app.state["currentlyPlaying"] is None:
-            return
-
         position, duration = self.app.state["position"], self.app.state["duration"]
+        if position is None or duration is None:
+            return
 
         left, right, bottom = self.get_dimension("left"), self.get_dimension("right"), self.get_dimension("bottom")
         surf, pos_rect = self.render_font(format_duration(position, duration >= 3600), size=20)
@@ -198,16 +195,13 @@ class UIThread:
             rect.midtop = (centerx, top)
             self.surface.blit(surf, rect)
 
-    def render_random_video(self, tick):
-        expires = self._diplay_random_video
+    def render_power_button_info(self, tick):
+        expires = self._power_button_info
         if expires < tick:
             return
 
-        if self.app.state["currentlyPlaying"] is not None:
-            return
-
         fgcolor, bgcolor = (WHITE, BLACK) if tick % 1000 < 500 else (BLACK, WHITE)
-        surf, rect = self.render_font("Finding Random Video", fgcolor, bgcolor, size=32, padding=22)
+        surf, rect = self.render_font("Turn Off TV Manually", fgcolor, bgcolor, size=32, padding=22)
         rect.center = (self.get_dimension("centerx"), self.get_dimension("centery"))
         self.surface.blit(surf, rect)
 
@@ -222,7 +216,7 @@ class UIThread:
             self.render_channel(tick)
             self.render_muted(tick)
             self.render_progress_bar(tick)
-            self.render_random_video(tick)
+            self.render_power_button_info(tick)
             if self.app.state["paused"]:
                 self.render_paused(tick)
 

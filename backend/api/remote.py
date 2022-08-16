@@ -49,9 +49,9 @@ class Remote(SingletonBaseClass):
             logger.info(f"Got {button} press")
 
             if button == "KEY_RIGHT":
-                await self.player.seek(15)
+                await self.player.seek(20)
             elif button == "KEY_LEFT":
-                await self.player.seek(-15)
+                await self.player.seek(-20)
             elif button == "KEY_BACK":
                 await self.player.set_position(0)
             elif button == "KEY_VOLUMEUP":
@@ -62,7 +62,7 @@ class Remote(SingletonBaseClass):
                 direction = 1 if button == "KEY_UP" else -1
                 self.player.change_channel(direction)
             elif button == "KEY_HOME":
-                await self.player.request_random_video()
+                self.player.request_random_video()
             elif button == "KEY_OK":
                 await self.player.play_pause()
 

@@ -31,9 +31,9 @@ PI. I use a 3 B+, but it should work on any newer board.
 
 ### TODO List
 
-- [ ] The power button on the remote control should blank the screen, and turn
-      the player off. Web UI will have to support it too (maybe)
+- [x] The power button on the remote control returns feedback
+- [x] Channels resume from where they left off
 - [x] Progress indicator on overlay when seek happens
-- [ ] Rated "R" should show up on overlay
+- [x] Rated "R" should show up on overlay
 - [x] Show play/pause state in overlay
 - [ ] _Some_ sort of navigable overlay menu
