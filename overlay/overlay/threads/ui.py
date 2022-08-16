@@ -98,7 +98,7 @@ class UIThread:
             for channel, video in enumerate(self.app.state["videos"], 1):
                 if video["path"] == currently_playing:
                     title = video["title"]
-                    is_r_rated = video["isRRated"]
+                    is_r_rated = video["is_r_rated"]
                     break
             self._display_channel = (pygame.time.get_ticks() + timeout, str(channel), title, is_r_rated)
 
@@ -147,9 +147,9 @@ class UIThread:
         rect.topleft = (left, top)
         self.surface.blit(surf, rect)
         if is_r_rated:
-            surf, r_rect = self.render_font("R", RED, size=22)
-            r_rect.topleft = (rect.right + 10, top)
-            self.surface.blit(surf, r_rect)
+            top += rect.height
+            surf, rect = self.render_font("Rated R", RED, size=18)
+            self.surface.blit(sur, rect)
 
     def render_muted(self, tick):
         expires, muted = self._display_muted
