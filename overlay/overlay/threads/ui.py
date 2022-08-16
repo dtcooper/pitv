@@ -69,7 +69,7 @@ class UIThread:
         return value
 
     def clear_all(self):
-        self._display_channel = (-1, None, None)
+        self._display_channel = (-1, None, None, False)
         self._display_muted = (-1, None)
         self._display_progress_bar = -1
         self._diplay_random_video = -1
@@ -92,14 +92,15 @@ class UIThread:
         currently_playing = self.app.state["currentlyPlaying"]
 
         if currently_playing is None:
-            self._display_channel = (-1, None, None)
+            self._display_channel = (-1, None, None, False)
         else:
-            channel, title = "0", currently_playing
+            channel, title, is_r_rated = "0", currently_playing, False
             for channel, video in enumerate(self.app.state["videos"], 1):
                 if video["path"] == currently_playing:
                     title = video["title"]
+                    is_r_rated = video["isRRated"]
                     break
-            self._display_channel = (pygame.time.get_ticks() + timeout, str(channel), title)
+            self._display_channel = (pygame.time.get_ticks() + timeout, str(channel), title, is_r_rated)
 
     def muted_changed(self, timeout=4500):
         muted = self.app.state["muted"]
@@ -132,7 +133,7 @@ class UIThread:
             return box_surf, box_rect
 
     def render_channel(self, tick):
-        expires, channel, title = self._display_channel
+        expires, channel, title, is_r_rated = self._display_channel
         if expires < tick and not self.app.state["paused"]:
             return
 
@@ -145,6 +146,10 @@ class UIThread:
         surf, rect = self.render_font(title, YELLOW, size=24, font="italic")
         rect.topleft = (left, top)
         self.surface.blit(surf, rect)
+        if is_r_rated:
+            surf, r_rect = self.render_font("R", RED, size=22)
+            r_rect.topleft = (rect.right + 10, top)
+            self.surface.blit(surf, r_rect)
 
     def render_muted(self, tick):
         expires, muted = self._display_muted
