@@ -1,6 +1,8 @@
 #!/bin/sh
 
-tar --skip-old-files --absolute-names -xf /mounted-github-repo/omxplayer-dist.tgz
+set -e
+
+tar --skip-old-files --absolute-names -xf /mounted-github-repo/build/omxplayer-dist.tgz
 
 # TODO: Only do on arm64
 dpkg --add-architecture armhf

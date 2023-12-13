@@ -4,7 +4,7 @@ set -e
 
 if [ ! -e /.dockerenv ]; then
     cd "$(dirname "$0")"
-    docker run --rm -v "$(pwd):/mnt" --platform linux/arm debian:bullseye /mnt/omxplayer.sh
+    docker run --rm -v "$(pwd):/mnt" --platform linux/arm debian:bullseye /mnt/compile-omxplayer.sh
     exit 0
 fi
 
