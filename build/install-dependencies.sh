@@ -28,10 +28,13 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     liblzma-dev \
     libncurses5-dev \
     libncursesw5-dev \
+    libnss3-dev \
     libreadline-dev \
     libsqlite3-dev \
     libssl-dev \
+    lzma-dev \
     openssl \
+    uuid-dev \
     zlib1g-dev
 
 # TODO: Only do on arm64
@@ -43,7 +46,7 @@ done
 mkdir -p /tmp/python
 cd /tmp/python
 curl -sL "https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz" | tar xJ --strip-components=1
-./configure --enable-optimizations
+./configure --enable-optimizations --with-lto
 make -j "$(nproc)"
 make altinstall
 cd /tmp
