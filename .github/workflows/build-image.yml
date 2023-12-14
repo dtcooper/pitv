@@ -31,14 +31,16 @@ jobs:
       -
         name: Create Raspberry Pi OS Image
         uses: dtcooper/rpi-image-modifier@main
+        id: modify-image
         with:
           base-image-url: https://downloads.raspberrypi.com/raspios_oldstable_lite_arm64/images/raspios_oldstable_lite_arm64-2023-12-06/2023-12-05-raspios-bullseye-arm64-lite.img.xz
           script-path: ./build/install-dependencies.sh
           image-path: 2023-12-05-raspios-bullseye-arm64-lite-pitv.img
+          compress-with-xz: true
       -
         name: Upload build artifact
         uses: actions/upload-artifact@v3
         with:
           name: build-image
-          path: 2023-12-05-raspios-bullseye-arm64-lite-pitv.img
+          path: ${{ steps.modify-image.outputs.image-path }}
           retention-days: 2
