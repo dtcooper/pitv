@@ -37,7 +37,7 @@ jobs:
           pull: true
           platforms: linux/${{ matrix.platform }}
           context: ./player/
-          tags: pitv-player:latest
+          tags: pitv-player
           build-args: |
             DEBUG=0
             PLATFORM=linux/${{ matrix.platform}}
