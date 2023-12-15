@@ -75,12 +75,12 @@ WORKDIR /app
 ARG POETRY_VERSION=1.7.1
 # Rust needed for armhf poetry install (package: cryptography)
 RUN if [ "$(dpkg --print-architecture)" = armhf ]; then \
-        curl https://sh.rustup.rs -sSf | sh -s -- -y \
+        curl -sSL https://sh.rustup.rs | sh -s -- -y \
         && export PATH="/root/.cargo/bin:${PATH}" \
     ; fi \
     && curl -sSL https://install.python-poetry.org | python - \
     && if [ "$(dpkg --print-architecture)" = armhf ]; then \
-        rustup self uninstall -y \
+        rm -rf /root/.rustup /root/.cargo \
     ; fi
 
 ENV PATH="/root/.local/bin:${PATH}"

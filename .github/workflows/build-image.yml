@@ -37,7 +37,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
-        name: Build pitv Docker Image
+        name: Build pitv Docker image
         uses: docker/build-push-action@v5
         with:
           push: false
