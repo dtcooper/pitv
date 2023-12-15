@@ -67,6 +67,7 @@ RUN apt-get update \
         libdbus-1-3:armhf \
         libdvdread8:armhf \
         libraspberrypi0:armhf \
+        procps \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir /app \
     # These libs don't seem to get properly symlinked on arm64
