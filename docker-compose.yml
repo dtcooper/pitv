@@ -1,0 +1,12 @@
+services:
+  player:
+    image: ghcr.io/dtcooper/pitv:latest
+    build:
+      context: player
+      args:
+      - "DEBUG=${DEBUG:-0}"
+    volumes:
+      - "./player:/app"
+    # devices:
+    #   - /dev/vchiq:/dev/vchiq
+    #   - /dev/snd:/dev/snd
