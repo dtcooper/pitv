@@ -49,7 +49,7 @@ jobs:
         id: modify-image
         with:
           base-image-url: https://downloads.raspberrypi.com/raspios_lite_armhf/images/raspios_lite_armhf-${{ env.RASPIOS_VERSION }}/${{ env.RASPIOS_VERSION }}-raspios-bookworm-${{ matrix.platform }}-lite.img.xz
-          image-path: ${{ env.RASPIOS_VERSION }}-raspios-bullseye-${{ matrix-platform }}-lite-pitv.img
+          image-path: ${{ env.RASPIOS_VERSION }}-raspios-bullseye-${{ matrix.platform }}-lite-pitv.img
           compress-with-xz: true
       -
         name: Upload build artifact
