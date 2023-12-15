@@ -8,7 +8,7 @@ RUN apt-get -y update \
         ca-certificates \
         curl \
         gpg \
-    && curl -sL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
+    && curl -sSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
     && echo "deb http://archive.raspberrypi.org/debian/ $(sh -c '. /etc/os-release; echo "${VERSION_CODENAME}"') main" \
         > /etc/apt/sources.list.d/raspi.list \
     && apt-get update \
@@ -29,7 +29,7 @@ RUN apt-get -y update \
 
 ARG ARG FIRMWARE_VC_LIBS_VERSION=7e6decce72
 RUN cd /tmp && mkdir firmware \
-    && curl -sL "https://github.com/raspberrypi/firmware/tarball/${FIRMWARE_VC_LIBS_VERSION}" \
+    && curl -sSL "https://github.com/raspberrypi/firmware/tarball/${FIRMWARE_VC_LIBS_VERSION}" \
         | tar xz --strip-components=1 -C firmware \
     && mv -v firmware/opt/vc /opt/vc \
     && rm -rf firmware
@@ -37,25 +37,18 @@ RUN cd /tmp && mkdir firmware \
 ARG OMXPLAYER_REPO=mjfwalsh/omxplayer \
     OMXPLAYER_VERSION=c8a89d8b84
 RUN mkdir /build && cd /build \
-    && curl -sL "https://github.com/${OMXPLAYER_REPO}/tarball/${OMXPLAYER_VERSION}" | tar xz --strip-components=1 \
+    && curl -sSL "https://github.com/${OMXPLAYER_REPO}/tarball/${OMXPLAYER_VERSION}" | tar xz --strip-components=1 \
     && CFLAGS=-marm make -j "$(nproc)" \
     && make dist
 
 
-FROM --platform="${PLATFORM:-$BUILDPLATFORM}" "python:3.12-slim-${DEBIAN_VERSION}"
+FROM --platform="${PLATFORM:-$BUILDPLATFORM}" "python:3.12-${DEBIAN_VERSION}"
 
 RUN dpkg --add-architecture armhf \
-    && apt-get -y update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        gpg \
-    && curl -sL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
+    && curl -sSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
     && echo "deb http://archive.raspberrypi.org/debian/ $(sh -c '. /etc/os-release; echo "${VERSION_CODENAME}"') main" \
         > /etc/apt/sources.list.d/raspi.list \
     && apt-get update \
-    && apt-get remove -y --purge gpg \
-    && apt-get autoremove -y --purge \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         dbus \
@@ -69,7 +62,7 @@ RUN dpkg --add-architecture armhf \
         libraspberrypi0:armhf \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir /app \
-    # These libs don't seem to get properly symlinked on aarch64
+    # These libs don't seem to get properly symlinked on arm64
     && cd /usr/lib/arm-linux-gnueabihf \
     && for lib in bcm_host vchiq_arm vcos; do \
         if [ ! -e "lib${lib}.so" ]; then \

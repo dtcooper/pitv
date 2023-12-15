@@ -40,7 +40,7 @@ jobs:
           tags: pitv-player
           build-args: |
             DEBUG=0
-            PLATFORM=linux/${{ matrix.platform}}
+            PLATFORM=linux/${{ matrix.platform }}
           outputs: type=docker,dest=./pitv-player.tar
       -
         uses: mxschmitt/action-tmate@v3
