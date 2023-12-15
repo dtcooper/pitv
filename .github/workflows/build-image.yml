@@ -54,7 +54,7 @@ jobs:
           image-path: ${{ env.RASPIOS_VERSION }}-raspios-bookworm-arm64-pitv.img
           compress-with-xz: true
           run: |
-            cp /mounted-github-repo/pitv-player.tar /
+            cp -v /mounted-github-repo/pitv-player-image.tar /
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
             curl -sSL https://get.docker.com/ | sh

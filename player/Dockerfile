@@ -1,5 +1,4 @@
-ARG DEBIAN_VERSION=bullseye \
-    PLATFORM=
+ARG DEBIAN_VERSION=bullseye
 
 FROM --platform=linux/armhf "debian:${DEBIAN_VERSION}" AS omxplayer-builder
 
@@ -42,7 +41,7 @@ RUN mkdir /build && cd /build \
     && make dist
 
 
-FROM --platform=linux/arm64 "python:3.12-slim-${DEBIAN_VERSION}"
+FROM --platform=linux/arm64 "python:3.12-slim-${DEBIAN_VERSION}" AS final
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
