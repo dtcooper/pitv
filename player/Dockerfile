@@ -42,12 +42,20 @@ RUN mkdir /build && cd /build \
     && make dist
 
 
-FROM --platform="${PLATFORM:-$BUILDPLATFORM}" "python:3.12-${DEBIAN_VERSION}"
+FROM --platform=linux/arm64 "python:3.12-slim-${DEBIAN_VERSION}"
 
-RUN dpkg --add-architecture armhf \
-    && curl -sSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gpg \
+    && curl -sSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key \
+        | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
     && echo "deb http://archive.raspberrypi.org/debian/ $(sh -c '. /etc/os-release; echo "${VERSION_CODENAME}"') main" \
         > /etc/apt/sources.list.d/raspi.list \
+    && DEBIAN_FRONTEND=noninteractive apt-get remove -y --purge gpg \
+    && DEBIAN_FRONTEND=noninteractive apt-get autoremove -y --purge \
+    && dpkg --add-architecture armhf \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -74,14 +82,7 @@ WORKDIR /app
 
 ARG POETRY_VERSION=1.7.1
 # Rust needed for armhf poetry install (package: cryptography)
-RUN if [ "$(dpkg --print-architecture)" = armhf ]; then \
-        curl -sSL https://sh.rustup.rs | sh -s -- -y \
-        && export PATH="/root/.cargo/bin:${PATH}" \
-    ; fi \
-    && curl -sSL https://install.python-poetry.org | python - \
-    && if [ "$(dpkg --print-architecture)" = armhf ]; then \
-        rm -rf /root/.rustup /root/.cargo \
-    ; fi
+RUN curl -sSL https://install.python-poetry.org | python -
 
 ENV PATH="/root/.local/bin:${PATH}"
 
