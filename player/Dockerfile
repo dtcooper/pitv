@@ -42,13 +42,20 @@ RUN mkdir /build && cd /build \
     && make dist
 
 
-FROM --platform="${PLATFORM:-$BUILDPLATFORM}" "python:3.12-${DEBIAN_VERSION}"
+FROM --platform="${PLATFORM:-$BUILDPLATFORM}" "python:3.12-slim-${DEBIAN_VERSION}"
 
 RUN dpkg --add-architecture armhf \
+    && apt-get -y update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gpg \
     && curl -sL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
     && echo "deb http://archive.raspberrypi.org/debian/ $(sh -c '. /etc/os-release; echo "${VERSION_CODENAME}"') main" \
         > /etc/apt/sources.list.d/raspi.list \
     && apt-get update \
+    && apt-get remove -y --purge gpg \
+    && apt-get autoremove -y --purge \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         dbus \
