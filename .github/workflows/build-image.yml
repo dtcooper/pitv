@@ -68,6 +68,6 @@ jobs:
         with:
           name: built-image
           path: ${{ steps.create-image.outputs.image-path }}
-          if-no-files-found: fail
+          if-no-files-found: error
           retention-days: 2
           compression-level: 0  # Already compressed with xz above
