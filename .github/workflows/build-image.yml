@@ -52,8 +52,6 @@ jobs:
             PLATFORM=linux/${{ matrix.platform }}
           outputs: type=docker,dest=./pitv-player.tar
       -
-        uses: mxschmitt/action-tmate@v3
-      -
         name: Create Raspberry Pi OS Image
         uses: dtcooper/rpi-image-modifier@main
         id: modify-image
@@ -61,6 +59,11 @@ jobs:
           base-image-url: https://downloads.raspberrypi.com/raspios_lite_armhf/images/raspios_lite_armhf-${{ env.RASPIOS_VERSION }}/${{ env.RASPIOS_VERSION }}-raspios-bookworm-${{ matrix.platform }}-lite.img.xz
           image-path: ${{ env.RASPIOS_VERSION }}-raspios-bullseye-${{ matrix.platform }}-lite-pitv.img
           compress-with-xz: true
+          run: |
+            cp /mounted-github-repo/pitv-player.tar /
+            apt-get update
+            DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
+            curl -sSL https://get.docker.com/ | sh
       -
         name: Upload build artifact
         uses: actions/upload-artifact@v3
