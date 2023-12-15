@@ -46,7 +46,11 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/${{ github.actor }}/pitv-cache:player,mode=max
           outputs: type=docker,dest=./pitv-player-image.tar
       -
-        name: Create Raspberry Pi OS Image
+        name: Compress pitv Docker image
+        shell: bash
+        run: xz -T0 pitv-player-image.tar
+      -
+        name: Create Raspberry Pi OS image
         uses: dtcooper/rpi-image-modifier@main
         id: create-image
         with:
@@ -54,7 +58,7 @@ jobs:
           image-path: ${{ env.RASPIOS_VERSION }}-raspios-bookworm-arm64-pitv.img
           compress-with-xz: true
           run: |
-            cp -v /mounted-github-repo/pitv-player-image.tar /
+            cp -v /mounted-github-repo/pitv-player-image.tar.xz /
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
             curl -sSL https://get.docker.com/ | sh
