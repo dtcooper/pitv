@@ -7,7 +7,7 @@ RUN apt-get -y update \
         ca-certificates \
         curl \
         gpg \
-    && curl -sSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
+    && curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
     && echo "deb http://archive.raspberrypi.org/debian/ $(sh -c '. /etc/os-release; echo "${VERSION_CODENAME}"') main" \
         > /etc/apt/sources.list.d/raspi.list \
     && apt-get update \
@@ -28,7 +28,7 @@ RUN apt-get -y update \
 
 ARG ARG FIRMWARE_VC_LIBS_VERSION=7e6decce72
 RUN cd /tmp && mkdir firmware \
-    && curl -sSL "https://github.com/raspberrypi/firmware/tarball/${FIRMWARE_VC_LIBS_VERSION}" \
+    && curl -fsSL "https://github.com/raspberrypi/firmware/tarball/${FIRMWARE_VC_LIBS_VERSION}" \
         | tar xz --strip-components=1 -C firmware \
     && mv -v firmware/opt/vc /opt/vc \
     && rm -rf firmware
@@ -36,7 +36,7 @@ RUN cd /tmp && mkdir firmware \
 ARG OMXPLAYER_REPO=mjfwalsh/omxplayer \
     OMXPLAYER_VERSION=c8a89d8b84
 RUN mkdir /build && cd /build \
-    && curl -sSL "https://github.com/${OMXPLAYER_REPO}/tarball/${OMXPLAYER_VERSION}" | tar xz --strip-components=1 \
+    && curl -fsSL "https://github.com/${OMXPLAYER_REPO}/tarball/${OMXPLAYER_VERSION}" | tar xz --strip-components=1 \
     && CFLAGS=-marm make -j "$(nproc)" \
     && make dist
 
@@ -48,7 +48,7 @@ RUN apt-get update \
         ca-certificates \
         curl \
         gpg \
-    && curl -sSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key \
+    && curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key \
         | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
     && echo "deb http://archive.raspberrypi.org/debian/ $(sh -c '. /etc/os-release; echo "${VERSION_CODENAME}"') main" \
         > /etc/apt/sources.list.d/raspi.list \
@@ -80,8 +80,7 @@ RUN apt-get update \
 WORKDIR /app
 
 ARG POETRY_VERSION=1.7.1
-# Rust needed for armhf poetry install (package: cryptography)
-RUN curl -sSL https://install.python-poetry.org | python -
+RUN curl -fsSL https://install.python-poetry.org | python -
 
 ENV PATH="/root/.local/bin:${PATH}"
 

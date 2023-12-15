@@ -48,7 +48,7 @@ jobs:
       -
         name: Create Raspberry Pi OS Image
         uses: dtcooper/rpi-image-modifier@main
-        id: modify-image
+        id: create-image
         with:
           base-image-url: https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-${{ env.RASPIOS_VERSION }}/${{ env.RASPIOS_VERSION }}-raspios-bookworm-arm64-lite.img.xz
           image-path: ${{ env.RASPIOS_VERSION }}-raspios-bookworm-arm64-pitv.img
@@ -60,8 +60,10 @@ jobs:
             curl -sSL https://get.docker.com/ | sh
       -
         name: Upload build artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: build-images
-          path: ${{ steps.modify-image.outputs.image-path }}
+          name: built-image
+          path: ${{ steps.create-image.outputs.image-path }}
+          if-no-files-found: fail
           retention-days: 2
+          compression-level: 0  # Already compressed with xz above
