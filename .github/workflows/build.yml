@@ -25,9 +25,10 @@ jobs:
         id: vars
         shell: bash
         run: |
-          echo "container=ghcr.io/${{ github.actor }}/pitv-player" >> "$GITHUB_OUTPUT"
+          IMAGE_BASE="ghcr.io/${{ github.actor }}/pitv-player"
+          echo "image=${IMAGE_BASE}:latest" >> "$GITHUB_OUTPUT"
+          echo "image-sha:${IMAGE_BASE}:$(echo "${GITHUB_SHA}" | cut -c 1-8)" >> "$GITHUB_OUTPUT"
           echo "cache-tag=ghcr.io/${{ github.actor }}/pitv-cache:player" >> "$GITHUB_OUTPUT"
-          echo "short-sha=$(echo "${GITHUB_SHA}" | cut -c 1-8)" >> "$GITHUB_OUTPUT"
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -51,8 +52,8 @@ jobs:
           platforms: linux/arm64
           context: ./player/
           tags: |
-            ${{ steps.vars.outputs.container }}:latest
-            ${{ steps.vars.outputs.container }}:${{ steps.vars.outputs.short-sha}}
+            ${{ steps.vars.outputs.image }}
+            ${{ steps.vars.outputs.image-sha }}
           cache-from: type=registry,ref=${{ steps.vars.outputs.cache-tag }}
           cache-to: type=registry,ref=${{ steps.vars.outputs.cache-tag }},mode=max
       - shell: bash
@@ -61,9 +62,17 @@ jobs:
       -
         name: Compress pitv Docker image
         shell: bash
+        env:
+          BUILT_DIGEST: ${{ steps.docker-build.outputs.digest }}
+          IMAGE: ${{ steps.vars.outputs.image }}
         run: |
-          docker pull --platform linux/arm64 ${{ steps.vars.outputs.container }}:latest
-          docker save --output pitv-player-image.tar ${{ steps.vars.outputs.container }}:latest
+          PULLED_DIGEST="$(docker inspect --format='{{.RepoDigests}}' "${IMAGE}" | sed 's/^.*@\(.*\)]$/\1/')"
+          if [ "${BUILT_DIGEST}" != "${PULLED_DIGEST}" ];
+            echo 'Pulled digest DOES NOT equal built digest. Something went wrong.'
+            exit 1
+          fi
+          docker pull --platform linux/arm64 "${IMAGE}"
+          docker save --output pitv-player-image.tar "${IMAGE}"
           xz -T0 pitv-player-image.tar
       -
         name: Create Raspberry Pi OS image
