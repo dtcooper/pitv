@@ -16,6 +16,10 @@ jobs:
     name: Build PiTV image
     env:
       RASPIOS_VERSION: 2023-12-11
+      BASE_IMAGE: ghcr.io/${{ github.actor }}/pitv-player
+      IMAGE: ghcr.io/${{ github.actor }}/pitv-player:latest
+      IMAGE_CACHE: ghcr.io/${{ github.actor }}/pitv-cache:player
+
     steps:
       -
         name: Checkout
@@ -25,10 +29,7 @@ jobs:
         id: vars
         shell: bash
         run: |
-          IMAGE_BASE="ghcr.io/${{ github.actor }}/pitv-player"
-          echo "image=${IMAGE_BASE}:latest" >> "$GITHUB_OUTPUT"
-          echo "image-sha=${IMAGE_BASE}:$(echo "${GITHUB_SHA}" | cut -c 1-8)" >> "$GITHUB_OUTPUT"
-          echo "cache-tag=ghcr.io/${{ github.actor }}/pitv-cache:player" >> "$GITHUB_OUTPUT"
+          echo "IMAGE_SHA=${BASE_IMAGE}:$(echo "${GITHUB_SHA}" | cut -c 1-8)" >> "${GITHUB_ENV}"
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -52,10 +53,10 @@ jobs:
           platforms: linux/arm64
           context: ./player/
           tags: |
-            ${{ steps.vars.outputs.image }}
-            ${{ steps.vars.outputs.image-sha }}
-          cache-from: type=registry,ref=${{ steps.vars.outputs.cache-tag }}
-          cache-to: type=registry,ref=${{ steps.vars.outputs.cache-tag }},mode=max
+            ${{ env.IMAGE }}
+            ${{ env.IMAGE_SHA }}
+          cache-from: type=registry,ref=${{ env.IMAGE_CACHE }}
+          cache-to: type=registry,ref=${{ env.IMAGE_CACHE }},mode=max
       - shell: bash
         run: echo "DIGEST=${{ steps.docker-build.outputs.digest }}"
       - uses: mxschmitt/action-tmate@v3
@@ -64,7 +65,6 @@ jobs:
         shell: bash
         env:
           BUILT_DIGEST: ${{ steps.docker-build.outputs.digest }}
-          IMAGE: ${{ steps.vars.outputs.image }}
         run: |
           PULLED_DIGEST="$(docker inspect --format='{{.RepoDigests}}' "${IMAGE}" | sed 's/^.*@\(.*\)]$/\1/')"
           if [ "${BUILT_DIGEST}" != "${PULLED_DIGEST}" ];
