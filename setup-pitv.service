@@ -1,0 +1,14 @@
+[Unit]
+Description=Install PiTV on first boot
+After=docker.service
+Before=rc-local.service
+ConditionPathExists=/needs-setup-pitv
+
+[Service]
+ExecStart=/bin/sh -c 'cd "$(getent passwd 1000 | cut -d: -f6)/pitv" ; ./install.sh -vol /pitv-player-image.tar.xz ; rm /pitv-player-image.tar.xz'
+ExecStartPost=/bin/rm /needs-setup-pitv
+Type=oneshot
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

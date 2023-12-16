@@ -85,9 +85,10 @@ jobs:
           cache: true
           run: |
             cp -v /mounted-github-repo/pitv-player-image.tar.xz /
-            apt-get update
-            DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
+            cp -v /mounted-github-repo/setup-pitv.service
+            touch /needs-setup-pitv
             curl -sSL https://get.docker.com/ | sh
+            su - pi -c "git clone --branch '${{ github.ref_name }}' '${{ github.repositoryUrl }}' pitv"
       -
         name: Upload build artifact
         uses: actions/upload-artifact@v4

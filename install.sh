@@ -14,7 +14,8 @@ Script to install PiTV player on your Raspberry Pi
 Arguments:
   -l <path>, --local-image <path>   Usage local image at <path>, don't pull one
   --force-docker                    Force Docker installation, even it exists
-  -y, --yes                         Answer yes to all prompts
+  -o, --offline-only
+                    Perform an offline installation (assumes Docker installed)
   -n, --dry-run                     Dry run, don't actually install
   -v, --verbose                     Run verbosely
   -h, --help                        Show this help screen
@@ -24,9 +25,9 @@ EOF
 
 LOCAL_IMAGE=
 FORCE_DOCKER=
+OFFLINE_ONLY=
 DRY_RUN=
 VERBOSE=
-YES=
 while [ $# -gt 0 ]; do
     case "$1" in
         --local-image|-l)
@@ -36,8 +37,8 @@ while [ $# -gt 0 ]; do
         --force-docker)
             FORCE_DOCKER=1
             ;;
-        --yes|-y)
-            YES=1
+        -o|--offline-only)
+            OFFLINE_ONLY=1
             ;;
         --dry-run|-n)
             DRY_RUN=1
@@ -76,6 +77,9 @@ test_cmd() {
 install_docker() {
     if [ -z "$FORCE_DOCKER" ] && test_cmd docker; then
         echo 'Docker appears to already be installed. Skipping Docker installation!'
+    elif [ "$OFFLINE_ONLY" ]; then
+        echo "Docker required for installation, but can't install in offline only mode."
+        exit 1
     else
         if [ "$DRY_RUN" ]; then
             DOCKER_INSTALL_SCRIPT=/tmp/install-docker.sh
@@ -88,11 +92,18 @@ install_docker() {
     fi
 }
 
-load_container() {
+load_image() {
     if [ "$LOCAL_IMAGE" ]; then
+        echo "Loading local Docker image from file: ${LOCAL_IMAGE}"
         sh_exec docker load -i "${LOCAL_IMAGE}"
+    fi
+}
+
+start_pitv() {
+    if [ "$OFFLINE_ONLY" ]; then
+        sh_exec docker compose up --pull never -d
     else
-        sh_exec docker pull "${CONTAINER_NAME}"
+        sh_exec docker compose up -d
     fi
 }
 
@@ -108,5 +119,11 @@ if [ ! -e docker-compose.yml ]; then
     exit 1
 fi
 
+if [ "$OFFLINE_ONLY" ] && [ "$FORCE_DOCKER" ]; then
+    echo "Can't run in offline only mode and force Docker installion (requires network)"
+    exit 1
+fi
+
 install_docker
-load_container
+load_image
+start_pitv
