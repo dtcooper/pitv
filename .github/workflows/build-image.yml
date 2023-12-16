@@ -21,6 +21,14 @@ jobs:
         name: Checkout
         uses: actions/checkout@v4
       -
+        name: Set variables
+        id: vars
+        shell: bash
+        run: |
+          echo "container=ghcr.io/${{ github.actor }}/pitv-player" >> "$GITHUB_OUTPUT"
+          echo "cache-tag=ghcr.io/${{ github.actor }}/pitv-cache:player" >> "$GITHUB_OUTPUT"
+          echo "short-sha=$(echo "${GITHUB_SHA}" | cut -c 1-8)" >> "$GITHUB_OUTPUT"
+      -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       -
@@ -37,18 +45,22 @@ jobs:
         name: Build pitv Docker image
         uses: docker/build-push-action@v5
         with:
-          push: false
+          push: true
           pull: true
           platforms: linux/arm64
           context: ./player/
-          tags: pitv-player
-          cache-from: type=registry,ref=ghcr.io/${{ github.actor }}/pitv-cache:player
-          cache-to: type=registry,ref=ghcr.io/${{ github.actor }}/pitv-cache:player,mode=max
-          outputs: type=docker,dest=./pitv-player-image.tar
+          tags: |
+            ${{ steps.vars.outputs.container }}:latest
+            ${{ steps.vars.outputs.container }}:${{ steps.vars.outputs.short-sha}}
+          cache-from: type=registry,ref=${{ steps.vars.outputs.cache-tag }}
+          cache-to: type=registry,ref=${{ steps.vars.outputs.cache-tag }},mode=max
       -
         name: Compress pitv Docker image
         shell: bash
-        run: xz -T0 pitv-player-image.tar
+        run: |
+          docker pull ${{ steps.vars.outputs.container }}:latest
+          docker save -i pitv-player-image.tar ${{ steps.vars.outputs.container }}:latest
+          xz -T0 pitv-player-image.tar
       -
         name: Create Raspberry Pi OS image
         uses: dtcooper/rpi-image-modifier@main

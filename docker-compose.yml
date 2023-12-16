@@ -1,6 +1,6 @@
 services:
   player:
-    image: pitv-player
+    image: ghcr.io/dtcooper/pitv-player:latest
     build:
       context: player
       args:

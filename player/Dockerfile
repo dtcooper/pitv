@@ -41,20 +41,13 @@ RUN mkdir /build && cd /build \
     && make dist
 
 
-FROM --platform=linux/arm64 "python:3.12-slim-${DEBIAN_VERSION}" AS final
+FROM --platform=linux/arm64 "python:3.12-${DEBIAN_VERSION}" AS final
 
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        gpg \
+RUN dpkg --add-architecture armhf \
     && curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key \
         | gpg --dearmor > /etc/apt/trusted.gpg.d/raspi.gpg \
     && echo "deb http://archive.raspberrypi.org/debian/ $(sh -c '. /etc/os-release; echo "${VERSION_CODENAME}"') main" \
         > /etc/apt/sources.list.d/raspi.list \
-    && DEBIAN_FRONTEND=noninteractive apt-get remove -y --purge gpg \
-    && DEBIAN_FRONTEND=noninteractive apt-get autoremove -y --purge \
-    && dpkg --add-architecture armhf \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
