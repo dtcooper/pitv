@@ -27,7 +27,7 @@ jobs:
         run: |
           IMAGE_BASE="ghcr.io/${{ github.actor }}/pitv-player"
           echo "image=${IMAGE_BASE}:latest" >> "$GITHUB_OUTPUT"
-          echo "image-sha:${IMAGE_BASE}:$(echo "${GITHUB_SHA}" | cut -c 1-8)" >> "$GITHUB_OUTPUT"
+          echo "image-sha=${IMAGE_BASE}:$(echo "${GITHUB_SHA}" | cut -c 1-8)" >> "$GITHUB_OUTPUT"
           echo "cache-tag=ghcr.io/${{ github.actor }}/pitv-cache:player" >> "$GITHUB_OUTPUT"
       -
         name: Set up QEMU
