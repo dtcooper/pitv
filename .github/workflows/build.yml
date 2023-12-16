@@ -54,6 +54,7 @@ jobs:
             ${{ steps.vars.outputs.container }}:${{ steps.vars.outputs.short-sha}}
           cache-from: type=registry,ref=${{ steps.vars.outputs.cache-tag }}
           cache-to: type=registry,ref=${{ steps.vars.outputs.cache-tag }},mode=max
+      - uses: mxschmitt/action-tmate@v3
       -
         name: Compress pitv Docker image
         shell: bash
