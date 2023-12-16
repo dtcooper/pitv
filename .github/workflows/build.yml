@@ -58,7 +58,7 @@ jobs:
         name: Compress pitv Docker image
         shell: bash
         run: |
-          docker pull --platfor linux/arm64 ${{ steps.vars.outputs.container }}:latest
+          docker pull --platform linux/arm64 ${{ steps.vars.outputs.container }}:latest
           docker save -i pitv-player-image.tar ${{ steps.vars.outputs.container }}:latest
           xz -T0 pitv-player-image.tar
       -
