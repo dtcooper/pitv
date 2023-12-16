@@ -24,6 +24,8 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       -
         name: Set variables
         id: vars
@@ -82,11 +84,12 @@ jobs:
           cache: true
           run: |
             curl -sSL https://get.docker.com/ | sh
+            adduser pi docker
             apt update
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
             sed -i 's/dtoverlay=vc4-kms-v3d/dtoverlay=vc4-fkms-v3d/' /boot/config.txt
             sed -i 's/exit 0/if [ -e \/setup-pitv-image.tar.xz ]; then\n  echo "Installing PiTV Docker image..."\n  \$(getent passwd 1000 | cut -d: -f6)\/pitv\/install.sh -v -o -l \/setup-pitv-image.tar.xz \&\& rm \/setup-pitv-image.tar.xz\nfi\n\n\0/' /etc/rc.local
-            su - pi -c "git clone --branch '${{ github.ref_name }}' '${{ github.repositoryUrl }}' pitv"
+            su - pi -c "git clone --branch '${{ github.ref_name }}' '${{ github.server_url }}/${{ github.repository }}.git' pitv"
       -
         name: Upload build artifact
         uses: actions/upload-artifact@v4
