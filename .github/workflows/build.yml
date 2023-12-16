@@ -1,4 +1,4 @@
-name: Build Raspberry Pi OS Images
+name: Build Raspberry Pi OS Image
 
 on:
   push:
@@ -58,7 +58,7 @@ jobs:
         name: Compress pitv Docker image
         shell: bash
         run: |
-          docker pull ${{ steps.vars.outputs.container }}:latest
+          docker pull --platfor linux/arm64 ${{ steps.vars.outputs.container }}:latest
           docker save -i pitv-player-image.tar ${{ steps.vars.outputs.container }}:latest
           xz -T0 pitv-player-image.tar
       -
