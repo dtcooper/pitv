@@ -57,9 +57,6 @@ jobs:
             ${{ env.IMAGE_SHA }}
           cache-from: type=registry,ref=${{ env.IMAGE_CACHE }}
           cache-to: type=registry,ref=${{ env.IMAGE_CACHE }},mode=max
-      - shell: bash
-        run: echo "DIGEST=${{ steps.docker-build.outputs.digest }}"
-      - uses: mxschmitt/action-tmate@v3
       -
         name: Compress pitv Docker image
         shell: bash
