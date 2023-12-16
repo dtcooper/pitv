@@ -88,7 +88,7 @@ jobs:
             apt update
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
             sed -i 's/dtoverlay=vc4-kms-v3d/dtoverlay=vc4-fkms-v3d/' /boot/config.txt
-            sed -i 's/exit 0/if [ -e \/setup-pitv-image.tar.xz ]; then\n  echo "Installing PiTV Docker image..."\n  \$(getent passwd 1000 | cut -d: -f6)\/pitv\/install.sh -v -o -l \/setup-pitv-image.tar.xz \&\& rm \/setup-pitv-image.tar.xz\nfi\n\n\0/' /etc/rc.local
+            sed -i 's/^exit 0$/if [ -e \/setup-pitv-image.tar.xz ]; then\n  echo "Installing PiTV Docker image..."\n  \$(getent passwd 1000 | cut -d: -f6)\/pitv\/install.sh -v -o -l \/setup-pitv-image.tar.xz \&\& rm \/setup-pitv-image.tar.xz\nfi\n\n\0/' /etc/rc.local
             su - pi -c "git clone --branch '${{ github.ref_name }}' file:///mounted-github-repo/ pitv"
             su - pi -c "cd pitv ; git remote set-url origin 'https://github.com/${{ github.repository }}.git'"
       -
