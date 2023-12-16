@@ -54,11 +54,12 @@ jobs:
             ${{ steps.vars.outputs.container }}:${{ steps.vars.outputs.short-sha}}
           cache-from: type=registry,ref=${{ steps.vars.outputs.cache-tag }}
           cache-to: type=registry,ref=${{ steps.vars.outputs.cache-tag }},mode=max
-          outputs: type=docker,dest=./pitv-player-image.tar
       -
         name: Compress pitv Docker image
         shell: bash
         run: |
+          docker pull --platform linux/arm64 ${{ steps.vars.outputs.container }}:latest
+          docker save --output pitv-player-image.tar ${{ steps.vars.outputs.container }}:latest
           xz -T0 pitv-player-image.tar
       -
         name: Create Raspberry Pi OS image
