@@ -65,7 +65,7 @@ jobs:
         run: |
           docker pull --platform linux/arm64 "${IMAGE}"
           PULLED_DIGEST="$(docker inspect --format='{{.RepoDigests}}' "${IMAGE}" | sed 's/^.*@\(.*\)]$/\1/')"
-          if [ "${BUILT_DIGEST}" != "${PULLED_DIGEST}" ];
+          if [ "${BUILT_DIGEST}" != "${PULLED_DIGEST}" ]; then
             echo 'Pulled digest DOES NOT equal built digest. Something went wrong.'
             exit 1
           fi

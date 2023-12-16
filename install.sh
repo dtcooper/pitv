@@ -76,7 +76,9 @@ test_cmd() {
 
 install_docker() {
     if [ -z "$FORCE_DOCKER" ] && test_cmd docker; then
-        echo 'Docker appears to already be installed. Skipping Docker installation!'
+        if [ -z "$OFFLINE_ONLY" ]; then
+            echo 'Docker appears to already be installed. Skipping Docker installation!'
+        fi
     elif [ "$OFFLINE_ONLY" ]; then
         echo "Docker required for installation, but can't install in offline only mode."
         exit 1
