@@ -1,3 +1,5 @@
+# _NOTE THIS PROJECT IS NO LONGER MAINTAINED!<br>See [Vintage Pi TV](dtcooper/vintage-pi-tv) for its replacement._
+
 # Raspberry Pi Video Player
 
 Repository for my home project, a video player on an old CRT TV using the Raspberry
